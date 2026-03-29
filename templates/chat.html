@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Chat avec {{ friend.username }} - VIBE AFRICA{% endblock %}
+
+{% block content %}
+<style>
+    /* CONFIGURATION AUTOMATIQUE (RESPONSIVE) */
+    .chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        background: #1a1a1a;
+        overflow: hidden;
+        border: 1px solid #333;
+        position: relative;
+        
+        /* PAR DÉFAUT (ORDINATEUR) */
+        height: 85vh; 
+        max-width: 700px; /* Largeur max sur PC */
+        margin: 20px auto; /* Centre le chat avec des marges en haut/bas */
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    /* ADAPTATION POUR TÉLÉPHONE (Écrans de moins de 768px) */
+    @media (max-width: 768px) {
+        .chat-wrapper {
+            max-width: 100%; /* Prend toute la largeur */
+            margin: 0; /* Supprime les marges latérales */
+            height: 92vh; /* Prend presque toute la hauteur mobile */
+            border-radius: 0; /* Supprime les arrondis pour coller aux bords */
+            border: none;
+        }
+        
+        /* On ajuste la zone de contenu du base.html pour mobile si nécessaire */
+        .container {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+        }
+    }
+
+    /* HEADER */
+    .chat-header { 
+        background: #222; 
+        padding: 15px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+        border-bottom: 1px solid #333;
+        flex-shrink: 0;
+    }
+    
+    .user-info { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; }
+    .avatar-mini { 
+        width: 35px; height: 35px; background: #ff4b2b; border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;
+    }
+    .call-actions { display: flex; gap: 15px; font-size: 18px; color: #ff4b2b; }
+
+    /* ZONE DES MESSAGES */
+    .messages-display { 
+        flex: 1; 
+        overflow-y: auto; 
+        padding: 15px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 10px;
+        background: #111;
+        /* Pattern subtil pour le fond */
+        background-image: radial-gradient(#222 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+    
+    /* BULLES */
+    .msg { 
+        max-width: 80%; 
+        padding: 10px 14px; 
+        border-radius: 15px; 
+        font-size: 14px; 
+        line-height: 1.4;
+        position: relative;
+    }
+    .sent { align-self: flex-end; background: #ff4b2b; color: white; border-bottom-right-radius: 2px; }
+    .received { align-self: flex-start; background: #333; color: white; border-bottom-left-radius: 2px; }
+    .msg-time { font-size: 9px; opacity: 0.6; display: block; text-align: right; margin-top: 4px; }
+
+    /* BARRE D'ENTRÉE */
+    .input-area { 
+        background: #222; 
+        padding: 12px 15px; 
+        display: flex; 
+        align-items: center; 
+        gap: 10px; 
+        border-top: 1px solid #333;
+        flex-shrink: 0;
+    }
+    
+    .input-box { 
+        flex: 1; background: #111; border: 1px solid #444; border-radius: 25px; 
+        padding: 10px 15px; color: white; outline: none;
+    }
+    
+    .action-btn { background: none; border: none; color: #ff4b2b; font-size: 22px; cursor: pointer; transition: 0.2s; }
+    .action-btn:hover { transform: scale(1.1); }
+
+    /* MENU ATTACHEMENTS */
+    #attachment-menu { 
+        display: none; position: absolute; bottom: 70px; left: 15px; 
+        background: #262626; border-radius: 12px; padding: 15px; 
+        flex-direction: column; gap: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+        z-index: 100;
+        border: 1px solid #444;
+    }
+    .attach-option { color: white; text-decoration: none; font-size: 14px; cursor: pointer; display: flex; gap: 10px; align-items: center; }
+</style>
+
+<div class="chat-wrapper">
+    <div class="chat-header">
+        <a href="{{ url_for('messages_list') }}" style="color: #ff4b2b; text-decoration: none; font-size: 20px;">❮</a>
+        <a href="{{ url_for('profile', username=friend.username) }}" class="user-info">
+            <div class="avatar-mini">{{ friend.username[0] | upper }}</div>
+            <span style="font-weight: bold;">@{{ friend.username }}</span>
+        </a>
+        <div class="call-actions">
+            <span style="cursor:pointer" onclick="alert('Lancement de l\'appel...')">📞</span>
+            <span style="cursor:pointer" onclick="alert('Lancement de la vidéo...')">📹</span>
+        </div>
+    </div>
+
+    <div class="messages-display" id="chat-box">
+        {% for msg in messages %}
+            <div class="msg {% if msg.sender_id == session['user_id'] %}sent{% else %}received{% endif %}">
+                {% if msg.type == 'image' %}
+                    <img src="{{ url_for('static', filename='uploads/' + msg.content) }}" style="max-width: 100%; border-radius: 10px;">
+                {% else %}
+                    {{ msg.content }}
+                {% endif %}
+                <span class="msg-time">19:30</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div id="attachment-menu">
+        <label class="attach-option"><span>🖼️</span> Galerie<input type="file" style="display:none" onchange="sendFile()"></label>
+        <div class="attach-option" onclick="alert('Micro activé')"><span>🎙️</span> Vocal</div>
+        <div class="attach-option" onclick="alert('Position envoyée')"><span>📍</span> Position</div>
+    </div>
+
+    <form class="input-area" method="POST">
+        <span style="color: #888; cursor: pointer; font-size: 20px;" onclick="toggleMenu()">➕</span>
+        <input type="text" name="content" class="input-box" id="msg-input" placeholder="Écrire à @{{ friend.username }}..." required autocomplete="off">
+        <button type="submit" class="action-btn">🚀</button>
+    </form>
+</div>
+
+<script>
+    const chatBox = document.getElementById("chat-box");
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    function toggleMenu() {
+        const menu = document.getElementById("attachment-menu");
+        menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+    }
+
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById("attachment-menu");
+        if (!e.target.closest('.input-area') && !e.target.closest('#attachment-menu')) {
+            menu.style.display = 'none';
+        }
+    });
+
+    function sendFile() {
+        alert("Fichier prêt pour l'envoi !");
+        toggleMenu();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Bienvenue - VIBE AFRICA{% endblock %}
+
+{% block content %}
+<style>
+    .welcome-container {
+        text-align: center;
+        padding: 60px 20px;
+        min-height: 70vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .logo-vibe { font-size: 4rem; margin-bottom: 10px; }
+    .welcome-text { color: #888; font-size: 1.1rem; margin-bottom: 30px; max-width: 500px; line-height: 1.6; }
+    
+    .btn-main {
+        background: linear-gradient(45deg, #ff4b2b, #ff416c);
+        color: white;
+        padding: 18px 45px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 15px rgba(255, 75, 43, 0.3);
+    }
+</style>
+
+<div class="welcome-container">
+    <div class="logo-vibe">🌍</div>
+    <h1 style="font-size: 2.5rem; margin-bottom: 15px;">VIBE AFRICA</h1>
+    <p class="welcome-text">
+        La plateforme où Kinshasa partage ses meilleures pépites. Tech, Mode, Food et bien plus encore !
+    </p>
+
+    <a href="{{ url_for('register') }}" class="btn-main">Créer mon compte</a>
+
+    <p style="margin-top: 30px; color: #666;">
+        Déjà un membre ? <a href="{{ url_for('login') }}" style="color: #ff4b2b; text-decoration: none; font-weight: bold;">Se connecter</a>
+    </p>
+</div>
+{% endblock %}

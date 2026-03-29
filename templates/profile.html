@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Profil de {{ user.username }} - VIBE AFRICA{% endblock %}
+
+{% block content %}
+<style>
+    /* Styles de la carte de profil */
+    .profile-card { 
+        background: #222; 
+        max-width: 500px; 
+        margin: 20px auto; 
+        padding: 30px; 
+        border-radius: 20px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+        text-align: center; 
+        border: 1px solid #333;
+    }
+    
+    .avatar-circle {
+        width: 80px; height: 80px; background: #ff4b2b; 
+        border-radius: 50%; margin: 0 auto 15px; 
+        display: flex; align-items: center; justify-content: center; 
+        font-size: 30px; font-weight: bold; border: 3px solid #111;
+    }
+
+    .stats { 
+        display: flex; 
+        justify-content: space-around; 
+        margin: 25px 0; 
+        border-top: 1px solid #333; 
+        padding-top: 15px; 
+    }
+    .stats-item { flex: 1; }
+    .stats-num { display: block; font-size: 18px; font-weight: bold; color: #ff4b2b; }
+    .stats-label { font-size: 12px; color: #888; }
+    
+    .btn-profile { 
+        padding: 12px 20px; 
+        border-radius: 25px; 
+        font-weight: bold; 
+        text-decoration: none; 
+        display: inline-block; 
+        margin: 5px; 
+        font-size: 13px;
+        transition: 0.2s;
+    }
+    .btn-profile:active { transform: scale(0.95); }
+    
+    .btn-follow { background: #ff4b2b; color: white; border: none; }
+    .btn-friend { background: #3498db; color: white; border: none; }
+    .btn-chat { background: #2ecc71; color: white; border: none; width: 90%; margin-top: 10px; }
+    .btn-logout { background: transparent; color: #e74c3c; border: 1px solid #e74c3c; width: 90%; }
+
+    /* --- GRILLE DE PUBLICATIONS (Vibes) --- */
+    .vibe-grid-header { margin: 30px 0 10px 0; font-size: 16px; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 5px; }
+    
+    .vibe-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* 3 colonnes */
+        gap: 2px;
+        margin-bottom: 40px;
+    }
+    .grid-item {
+        aspect-ratio: 1 / 1;
+        background: #1a1a1a;
+        position: relative;
+        overflow: hidden;
+        border-radius: 4px;
+    }
+    .grid-item img, .grid-item video { width: 100%; height: 100%; object-fit: cover; }
+    .grid-badge { position: absolute; top: 5px; right: 5px; font-size: 10px; background: rgba(0,0,0,0.6); padding: 2px 4px; border-radius: 3px; }
+</style>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="avatar-circle">
+            {{ user.username[0] | upper }}
+        </div>
+        
+        <h1 style="margin: 0; font-size: 24px;">@{{ user.username }}</h1>
+        <p style="color: #bbb; margin-top: 10px; font-style: italic;">" {{ user.bio or "Salut, je suis sur Vibe Africa !" }} "</p>
+
+        <div class="stats">
+            <div class="stats-item">
+                <span class="stats-num">{{ vibes|length }}</span>
+                <span class="stats-label">Vibes</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-num">{{ user.followers.count() if user.followers else 0 }}</span>
+                <span class="stats-label">Abonnés</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-num">0</span> <span class="stats-label">Amis</span>
+            </div>
+        </div>
+
+        {% if session.get('user_id') != user.id %}
+            <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+                <a href="{{ url_for('follow', username=user.username) }}" class="btn-profile btn-follow">
+                    {% if current_user_obj and user in current_user_obj.following %} ✓ Abonné {% else %} S'abonner {% endif %}
+                </a>
+
+                {% if not friendship %}
+                    <a href="{{ url_for('add_friend', receiver_id=user.id) }}" class="btn-profile btn-friend">
+                        Ajouter en ami 🤝
+                    </a>
+                {% else %}
+                    <span class="btn-profile" style="background: #333; color: #888;">✅ Amis</span>
+                {% endif %}
+
+                {% if friendship %}
+                    <a href="{{ url_for('chat', friend_id=user.id) }}" class="btn-profile btn-chat">
+                        💬 Discuter en privé
+                    </a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div style="padding: 10px; background: #1a1a1a; border-radius: 15px; margin-top: 10px;">
+                <p style="margin: 0 0 10px 0; font-size: 12px; color: #555;">Paramètres du compte</p>
+                <a href="{{ url_for('logout') }}" class="btn-profile btn-logout">Se déconnecter</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="vibe-grid-header">📍 Publications</div>
+    <div class="vibe-grid">
+        {% for vibe in vibes %}
+            <div class="grid-item">
+                {% if vibe.category == 'Photos' %}
+                    <img src="{{ url_for('static', filename='uploads/' + vibe.filename) }}">
+                    <span class="grid-badge">📸</span>
+                {% else %}
+                    <video src="{{ url_for('static', filename='uploads/' + vibe.filename) }}"></video>
+                    <span class="grid-badge">🎥</span>
+                {% endif %}
+            </div>
+        {% else %}
+            <div style="grid-column: span 3; text-align: center; padding: 40px; color: #444;">
+                <p>Aucune vibe pour le moment.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div style="text-align: center; margin-bottom: 30px;">
+        <a href="{{ url_for('dashboard') }}" style="color: #666; text-decoration: none; font-size: 13px;">← Retour au fil</a>
+    </div>
+</div>
+{% endblock %}

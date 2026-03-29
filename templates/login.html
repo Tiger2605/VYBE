@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion - VIBE AFRICA{% endblock %}
+
+{% block content %}
+<style>
+    /* On adapte le style pour qu'il soit beau sur le fond sombre de base.html */
+    .login-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh; /* Centre le formulaire verticalement */
+    }
+    .form-container { 
+        background: #222; 
+        padding: 30px; 
+        border-radius: 15px; 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); 
+        width: 100%;
+        max-width: 350px; 
+        border: 1px solid #333;
+    }
+    h2 { text-align: center; color: #ff4b2b; margin-top: 0; }
+    
+    /* Style pour les messages d'erreur flash */
+    .flash-error {
+        background: rgba(255, 75, 43, 0.15);
+        color: #ff4b2b;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ff4b2b;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 14px;
+        animation: fadeIn 0.5s;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    input { 
+        width: 100%; 
+        padding: 12px; 
+        margin: 10px 0; 
+        border: 1px solid #444; 
+        border-radius: 8px; 
+        box-sizing: border-box; 
+        background: #111;
+        color: white;
+    }
+    .btn-login { 
+        width: 100%; 
+        padding: 12px; 
+        background: #ff4b2b; 
+        border: none; 
+        color: white; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-weight: bold; 
+        font-size: 16px;
+        margin-top: 10px;
+        transition: 0.3s;
+    }
+    .btn-login:hover {
+        background: #e63e20;
+        transform: scale(1.02);
+    }
+    .register-link {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 14px;
+        color: #888;
+    }
+    .register-link a {
+        color: #ff4b2b;
+        text-decoration: none;
+    }
+</style>
+
+<div class="login-wrapper">
+    <div class="form-container">
+        <h2>Connexion</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-{{ category }}" id="flash-message">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <input type="text" name="username" placeholder="Nom d'utilisateur" required>
+            <input type="password" name="password" placeholder="Mot de passe" required>
+            <button type="submit" class="btn-login">Se connecter</button>
+        </form>
+        
+        <div class="register-link">
+            Pas encore de compte ? <a href="{{ url_for('register') }}">S'inscrire ici</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    setTimeout(function() {
+        var flashMessage = document.getElementById('flash-message');
+        if (flashMessage) {
+            flashMessage.style.transition = "opacity 0.5s ease";
+            flashMessage.style.opacity = "0";
+            setTimeout(function() { flashMessage.remove(); }, 500);
+        }
+    }, 5000); // 5 secondes
+</script>
+
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Feed - VIBE AFRICA{% endblock %}
+
+{% block content %}
+<style>
+    /* Barre de recherche */
+    .search-container {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 8px;
+    }
+    .search-input {
+        flex: 1;
+        background: #222;
+        border: 1px solid #333;
+        color: white;
+        padding: 12px 18px;
+        border-radius: 25px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+    .search-input:focus { border-color: #ff4b2b; }
+    
+    .search-btn {
+        background: #ff4b2b;
+        border: none;
+        color: white;
+        padding: 0 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .clear-search {
+        background: #333;
+        color: #888;
+        padding: 12px 15px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Barre de catégories scrollable */
+    .category-bar {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding: 10px 0;
+        margin-bottom: 15px;
+        scrollbar-width: none;
+    }
+    .category-bar::-webkit-scrollbar { display: none; }
+
+    .cat-item {
+        background: #222;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        margin-right: 8px;
+        text-decoration: none;
+        font-size: 13px;
+        border: 1px solid #333;
+        transition: 0.3s;
+    }
+    .cat-item.active { background: #ff4b2b; border-color: #ff4b2b; font-weight: bold; }
+
+    /* Styles du Feed */
+    .vibe-card { border-bottom: 1px solid #222; padding: 15px 0; margin-bottom: 10px; }
+    .vibe-header { padding: 8px 0; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
+    .vibe-badge { background: #333; color: #ff4b2b; font-size: 10px; padding: 2px 8px; border-radius: 5px; }
+    
+    .vibe-media { width: 100%; border-radius: 12px; background: black; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: block; }
+    
+    .vibe-footer { padding: 12px 0; }
+    .vibe-title { display: block; font-size: 15px; margin-bottom: 8px; }
+
+    .vibe-actions { display: flex; gap: 15px; margin-top: 10px; align-items: center; }
+    .action-link { text-decoration: none; font-size: 18px; color: white; background: #222; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
+    .action-link:hover { background: #333; }
+    .view-count-box { background: transparent; color: #888; font-size: 14px; cursor: default; }
+
+    .comment-area { display: none; margin-top: 15px; background: #1a1a1a; padding: 12px; border-radius: 10px; border: 1px solid #333; }
+    .comment-list { max-height: 200px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
+    .comment-item { font-size: 13px; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #222; }
+</style>
+
+<div class="feed-container">
+    <h2 style="text-align: center; margin-bottom: 15px; font-size: 20px;">VIBE AFRICA 🌍</h2>
+
+    <form action="{{ url_for('dashboard') }}" method="GET" class="search-container">
+        <input type="text" name="q" class="search-input" value="{{ search_query or '' }}" placeholder="Rechercher une vibe...">
+        {% if search_query %}<a href="{{ url_for('dashboard') }}" class="clear-search">✖</a>{% endif %}
+        <button type="submit" class="search-btn">🔍</button>
+    </form>
+
+    <div class="category-bar">
+        <a href="{{ url_for('dashboard') }}" class="cat-item {% if not selected_category %}active{% endif %}">Tout</a>
+        <a href="{{ url_for('dashboard', category='Infos') }}" class="cat-item {% if selected_category == 'Infos' %}active{% endif %}">📰 Infos</a>
+        <a href="{{ url_for('dashboard', category='Hot') }}" class="cat-item {% if selected_category == 'Hot' %}active{% endif %}">🔥 Hot</a>
+        <a href="{{ url_for('dashboard', category='Photos') }}" class="cat-item {% if selected_category == 'Photos' %}active{% endif %}">📸 Photos</a>
+        <a href="{{ url_for('dashboard', category='Tech') }}" class="cat-item {% if selected_category == 'Tech' %}active{% endif %}">💻 Tech</a>
+        <a href="{{ url_for('dashboard', category='Education') }}" class="cat-item {% if selected_category == 'Education' %}active{% endif %}">📚 École</a>
+    </div>
+
+    {% set pending_requests = get_pending_requests() %}
+    {% if pending_requests %}
+    <div style="background: rgba(52, 152, 219, 0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #3498db;">
+        <h3 style="color: #3498db; margin: 0 0 12px 0; font-size: 14px;">🤝 Demandes d'amis</h3>
+        {% for req in pending_requests %}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #222; padding: 10px; border-radius: 8px;">
+                <span style="font-size: 14px;"><strong>@{{ req.sender_name }}</strong></span>
+                <a href="{{ url_for('accept_friend', request_id=req.id) }}" 
+                   style="background: #2ecc71; color: white; padding: 5px 12px; border-radius: 20px; text-decoration: none; font-size: 12px; font-weight: bold;">Accepter</a>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% for video in videos %}
+    <div class="vibe-card">
+        <div class="vibe-header">
+            <a href="{{ url_for('profile', username=video.author.username) }}" style="color: white; text-decoration: none;">
+                @{{ video.author.username }}
+            </a>
+            <span class="vibe-badge">{{ video.category }}</span>
+        </div>
+        
+        {% if video.category == 'Photos' %}
+            <img src="{{ url_for('static', filename='uploads/' + video.filename) }}" class="vibe-media" alt="{{ video.title }}">
+        {% else %}
+            <video class="vibe-media" controls preload="metadata">
+                <source src="{{ url_for('static', filename='uploads/' + video.filename) }}" type="video/mp4">
+            </video>
+        {% endif %}
+
+        <div class="vibe-footer">
+            <span class="vibe-title"><strong>{{ video.title }}</strong></span>
+            
+            <div class="vibe-actions">
+                <div class="action-link view-count-box">
+                    👁️ <span id="view-count-{{ video.id }}">{{ video.views or 0 }}</span>
+                </div>
+
+                <a href="{{ url_for('like_video', video_id=video.id) }}" class="action-link" style="color: #ff4b2b;">
+                    ❤️ {{ video.likes|length }}
+                </a>
+
+                <div class="action-link" onclick="toggleComments('{{ video.id }}')">
+                    💬 <span style="font-size: 14px;">{{ video.comments|length }}</span>
+                </div>
+
+                <div class="action-link" onclick="copyLink('{{ video.id }}')">
+                    🔗 <span style="font-size: 14px;">Partager</span>
+                </div>
+            </div>
+
+            <div id="comment-section-{{ video.id }}" class="comment-area">
+                <form action="{{ url_for('add_comment', video_id=video.id) }}" method="POST" style="display: flex; gap: 8px;">
+                    <input type="text" name="content" placeholder="Ton avis..." required 
+                           style="flex: 1; background: #333; border: 1px solid #444; color: white; padding: 8px 12px; border-radius: 20px; font-size: 13px;">
+                    <button type="submit" style="background: #ff4b2b; border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;">OK</button>
+                </form>
+
+                <div class="comment-list">
+                    {% for comment in video.comments %}
+                        <div class="comment-item">
+                            <strong style="color: #ff4b2b;">@{{ comment.author.username }}</strong> {{ comment.content }}
+                        </div>
+                    {% else %}
+                        <p style="font-size: 11px; color: #666; text-align: center;">Soyez le premier à commenter !</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        <div style="text-align: center; color: #666; padding: 60px 20px;">
+            <p>Rien à voir ici pour l'instant. 🎥📸</p>
+            <a href="{{ url_for('upload_video') }}" style="color: #ff4b2b; text-decoration: none; font-weight: bold;">Partage ta première vibe !</a>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    // 1. GESTION DES COMMENTAIRES
+    function toggleComments(videoId) {
+        var section = document.getElementById("comment-section-" + videoId);
+        section.style.display = (section.style.display === "none" || section.style.display === "") ? "block" : "none";
+    }
+
+    // 2. COPIE DU LIEN
+    function copyLink(videoId) {
+        const url = window.location.origin + "/profile/" + videoId; 
+        navigator.clipboard.writeText(url).then(() => {
+            alert("Lien copié ! Partage cette Vibe avec tes amis 🌍");
+        });
+    }
+
+    // 3. SCRIPT MAGIQUE : COMPTEUR DE VUES
+    document.querySelectorAll('video').forEach(videoElement => {
+        videoElement.addEventListener('play', function() {
+            // On récupère l'ID depuis l'ID de la section commentaire parente
+            const card = this.closest('.vibe-card');
+            const videoId = card.querySelector('[id^="comment-section-"]').id.split('-').pop();
+            
+            fetch(`/increment_view/${videoId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        document.getElementById(`view-count-${videoId}`).innerText = data.new_views;
+                    }
+                })
+                .catch(err => console.error("Erreur compteur de vues:", err));
+        }, { once: true }); // On ne compte qu'une vue par lecture
+    });
+</script>
+
+{% endblock %}

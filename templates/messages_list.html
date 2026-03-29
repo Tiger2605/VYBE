@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Discussions - VIBE AFRICA{% endblock %}
+
+{% block content %}
+<style>
+    /* CONTENEUR PRINCIPAL RESPONSIVE */
+    .list-wrapper {
+        max-width: 700px;
+        margin: 20px auto;
+        background: #111;
+        border-radius: 20px;
+        border: 1px solid #333;
+        overflow: hidden;
+        position: relative;
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    @media (max-width: 768px) {
+        .list-wrapper { max-width: 100%; margin: 0; border-radius: 0; min-height: 100vh; border: none; }
+        .container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+    }
+
+    /* EN-TÊTE ET ONGLETS */
+    .header-section { background: #1a1a1a; border-bottom: 1px solid #333; }
+    
+    .page-title { padding: 20px; text-align: center; font-weight: bold; font-size: 20px; color: white; margin: 0; }
+    
+    .tabs { display: flex; list-style: none; padding: 0; margin: 0; }
+    .tab { 
+        flex: 1; text-align: center; padding: 15px; color: #888; 
+        font-weight: bold; cursor: pointer; transition: 0.3s; 
+        border-bottom: 3px solid transparent;
+    }
+    .tab.active { color: #ff4b2b; border-bottom: 3px solid #ff4b2b; }
+
+    /* LISTE DES DISCUSSIONS */
+    .content-area { flex: 1; overflow-y: auto; background: #0b0b0b; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .item-card { 
+        display: flex; align-items: center; padding: 15px 20px; 
+        border-bottom: 1px solid #1a1a1a; text-decoration: none; 
+        color: white; transition: background 0.2s;
+    }
+    .item-card:hover { background: #1a1a1a; }
+    
+    .avatar-circle { 
+        width: 50px; height: 50px; background: linear-gradient(45deg, #ff4b2b, #ff416c); 
+        border-radius: 50%; margin-right: 15px; display: flex; 
+        align-items: center; justify-content: center; font-weight: bold; font-size: 20px;
+        flex-shrink: 0;
+    }
+    .group-avatar { background: linear-gradient(45deg, #3498db, #2ecc71); } /* Couleur différente pour les groupes */
+
+    .item-info { flex: 1; overflow: hidden; }
+    .item-name { font-size: 16px; font-weight: bold; display: block; margin-bottom: 3px; }
+    .item-status { color: #888; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    
+    /* BOUTON APPEL (Téléphone) */
+    .phone-btn { 
+        background: #2ecc71; color: white; border-radius: 50%; width: 35px; height: 35px; 
+        display: flex; align-items: center; justify-content: center; 
+        text-decoration: none; margin-left: 10px; font-size: 16px;
+        transition: 0.2s;
+    }
+    .phone-btn:hover { transform: scale(1.1); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #555; }
+
+    /* BOUTON FLOTTANT (Nouvelle discussion) */
+    .fab {
+        position: absolute; bottom: 30px; right: 30px;
+        width: 60px; height: 60px; background: #ff4b2b; color: white;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 30px; font-weight: bold; cursor: pointer;
+        box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4); transition: 0.3s; border: none; z-index: 10;
+    }
+    .fab:hover { transform: scale(1.1); }
+
+    /* MODAL (Nouveau Contact / Groupe) */
+    .modal-overlay {
+        display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); z-index: 20; justify-content: center; align-items: flex-end;
+    }
+    .modal-content {
+        background: #1a1a1a; width: 100%; border-radius: 20px 20px 0 0; padding: 20px;
+        animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-option {
+        display: block; padding: 15px; color: white; text-decoration: none;
+        font-size: 16px; border-bottom: 1px solid #333; font-weight: bold;
+    }
+</style>
+
+<div class="list-wrapper">
+    <div class="header-section">
+        <h1 class="page-title">VIBE Messages</h1>
+        <ul class="tabs">
+            <li class="tab active" onclick="switchTab('private')">Privé</li>
+            <li class="tab" onclick="switchTab('groups')">Communautés</li>
+        </ul>
+    </div>
+
+    <div class="content-area">
+        
+        <div id="private" class="tab-content active">
+            {% for friend in friends %}
+            <div class="item-card">
+                <a href="{{ url_for('chat', friend_id=friend.id) }}" style="display: flex; align-items: center; flex: 1; text-decoration: none; color: white;">
+                    <div class="avatar-circle">{{ friend.username[0] | upper }}</div>
+                    <div class="item-info">
+                        <span class="item-name">@{{ friend.username }}</span>
+                        <span class="item-status">Appuyez pour ouvrir la discussion</span>
+                    </div>
+                </a>
+                
+                {% if friend.phone %}
+                    <a href="tel:{{ friend.phone }}" class="phone-btn" title="Appeler {{ friend.username }}">📞</a>
+                {% endif %}
+            </div>
+            {% else %}
+                <div class="empty-state">
+                    <span style="font-size: 40px; display: block; margin-bottom: 10px;">💬</span>
+                    <p>Aucune discussion en cours.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div id="groups" class="tab-content">
+            <a href="#" class="item-card">
+                <div class="avatar-circle group-avatar">🌍</div>
+                <div class="item-info">
+                    <span class="item-name">Vibe Africa Network</span>
+                    <span class="item-status">Judith: Bonjour la communauté !</span>
+                </div>
+            </a>
+            <div class="empty-state" style="display: none;">
+                <span style="font-size: 40px; display: block; margin-bottom: 10px;">👥</span>
+                <p>Rejoins ou crée une communauté !</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="fab" onclick="openModal()">+</button>
+
+    <div class="modal-overlay" id="actionModal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div style="width: 40px; height: 5px; background: #444; margin: 0 auto 20px; border-radius: 10px;"></div>
+            <h3 style="margin-top: 0; color: #888; font-size: 14px; text-align: center;">NOUVELLE DISCUSSION</h3>
+            <a href="#" class="modal-option">👤 Chercher un contact</a>
+            <a href="#" class="modal-option">👥 Créer une nouvelle communauté</a>
+            <a href="#" class="modal-option" style="color: #ff4b2b; text-align: center; border: none;" onclick="closeModal(event)">Annuler</a>
+        </div>
+    </div>
+</div>
+
+<div style="text-align: center; padding: 20px;">
+    <a href="{{ url_for('dashboard') }}" style="color: #666; text-decoration: none; font-size: 13px;">← Retour au fil d'actualité</a>
+</div>
+
+<script>
+    // Logique pour basculer entre les onglets
+    function switchTab(tabId) {
+        // Enlever la classe active de tous les onglets
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Ajouter la classe active à l'onglet cliqué
+        event.currentTarget.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    // Logique pour le Modal (Menu du bas)
+    function openModal() {
+        document.getElementById('actionModal').style.display = 'flex';
+    }
+
+    function closeModal(e) {
+        e.preventDefault();
+        document.getElementById('actionModal').style.display = 'none';
+    }
+</script>
+{% endblock %}
