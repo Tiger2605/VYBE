@@ -429,7 +429,10 @@ def create_group():
     return redirect(url_for('messages_list'))
 
 
+# On place la création des tables ICI, pour qu'elle s'exécute 
+# que ce soit via Python local ou via Gunicorn sur Render.
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
