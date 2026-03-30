@@ -3,6 +3,15 @@ from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import cloudinary
+import cloudinary.uploader
+importcloudinary.api
+
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+)
 
 app = Flask(__name__)
 
@@ -289,15 +298,38 @@ def upload_video():
         title = request.form.get('title')
         category = request.form.get('category') 
         
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            
-            new_video = Video(title=title, filename=filename, user_id=session['user_id'], category=category)
-            db.session.add(new_video)
-            db.session.commit()
-            return redirect(url_for('dashboard'))
+        # On vérifie si le fichier existe (on peut garder allowed_file ou laisser Cloudinary gérer)
+        if file and file.filename != '':
+            try:
+                # 1. ENVOI VERS CLOUDINARY
+                # resource_type="auto" permet de gérer Images ET Vidéos sans changer le code
+                upload_result = cloudinary.uploader.upload(
+                    file, 
+                    resource_type="auto",
+                    folder="vibe_africa_uploads"
+                )
+                
+                # 2. RÉCUPÉRATION DE L'URL (C'est le lien magique qui commence par https://)
+                file_url = upload_result['secure_url']
+                
+                # 3. ENREGISTREMENT DANS TA BASE POSTGRESQL
+                # IMPORTANT : On stocke 'file_url' dans la colonne 'filename' de ta table Video
+                new_video = Video(
+                    title=title, 
+                    filename=file_url,  # Ici on remplace le nom simple par l'URL complète
+                    user_id=session['user_id'], 
+                    category=category
+                )
+                
+                db.session.add(new_video)
+                db.session.commit()
+                
+                return redirect(url_for('dashboard'))
+
+            except Exception as e:
+                # En cas d'erreur réseau ou de clé API invalide
+                print(f"Erreur lors de l'upload Cloudinary : {e}")
+                return f"Erreur de mise en ligne : {e}", 500
             
     return render_template('upload.html')
 

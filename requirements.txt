@@ -6,6 +6,7 @@ cachetools==7.0.5
 certifi==2026.2.25
 charset-normalizer==3.4.6
 click==8.1.8
+cloudinary==1.30.0
 colorama==0.4.6
 Django==5.1.6
 djangorestframework==3.15.2
