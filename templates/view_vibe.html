@@ -1,58 +1,104 @@
 {% extends "base.html" %}
+
 {% block content %}
 <style>
-    .vibe-player-container {
-        max-width: 500px; margin: 0 auto; background: #000;
-        position: relative; border-radius: 15px; overflow: hidden;
-    }
-    .media-box { width: 100%; min-height: 400px; display: flex; align-items: center; justify-content: center; }
-    .media-box img, .media-box video { width: 100%; max-height: 80vh; object-fit: contain; }
+    /* On réutilise tes styles du dashboard pour la cohérence */
+    .vibe-player-page { max-width: 600px; margin: 0 auto; padding-bottom: 50px; }
+    .vibe-card-immersive { background: #111; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #222; }
     
-    .nav-btn {
-        position: absolute; top: 50%; transform: translateY(-50%);
-        background: rgba(255,255,255,0.2); color: white; border: none;
-        padding: 15px; border-radius: 50%; cursor: pointer; text-decoration: none;
-    }
-    .nav-prev { left: 10px; }
-    .nav-next { right: 10px; }
+    .media-container { width: 100%; background: #000; display: flex; align-items: center; justify-content: center; min-height: 400px; }
+    .media-container img, .media-container video { width: 100%; max-height: 80vh; object-fit: contain; }
 
-    .vibe-actions {
-        display: flex; justify-content: space-around; padding: 15px;
-        background: #111; border-top: 1px solid #222;
-    }
-    .action-item { color: #ccc; text-align: center; font-size: 14px; text-decoration: none; }
-    .action-item i { display: block; font-size: 20px; color: #ff4b2b; }
+    /* Navigation swipe-style */
+    .nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,75,43,0.3); color: white; padding: 15px; border-radius: 50%; text-decoration: none; font-weight: bold; z-index: 10; transition: 0.3s; }
+    .nav-arrow:hover { background: #ff4b2b; }
+    .nav-next { right: 10px; }
+    .nav-prev { left: 10px; }
+
+    /* Réutilisation de tes classes d'actions du Dashboard */
+    .vibe-actions { display: flex; gap: 15px; padding: 15px; background: #1a1a1a; align-items: center; border-top: 1px solid #222; }
+    .action-link { text-decoration: none; font-size: 16px; color: white; background: #222; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+    
+    .comment-area { display: none; padding: 15px; background: #111; border-top: 1px solid #222; }
+    .comment-list { max-height: 250px; overflow-y: auto; margin-top: 10px; }
+    .comment-item { font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #222; padding-bottom: 5px; }
 </style>
 
-<div class="vibe-player-container">
-    {% if prev_id %}
-        <a href="{{ url_for('view_vibe', vibe_id=prev_id) }}" class="nav-btn nav-prev">❮</a>
-    {% endif %}
-    
-    {% if next_id %}
-        <a href="{{ url_for('view_vibe', vibe_id=next_id) }}" class="nav-btn nav-next">❯</a>
-    {% endif %}
-
-    <div class="media-box">
-        {% if vibe.category == 'Photos' %}
-            <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}">
-        {% else %}
-            <video controls autoplay loop>
-                <source src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" type="video/mp4">
-            </video>
-        {% endif %}
+<div class="vibe-player-page">
+    <div style="margin-bottom: 15px;">
+        <a href="{{ url_for('profile', username=vibe.author.username) }}" style="color: white; text-decoration: none; font-weight: bold;">
+            ← @{{ vibe.author.username }}
+        </a>
     </div>
 
-    <div class="vibe-actions">
-        <a href="#" class="action-item">❤️ <span>{{ vibe.likes or 0 }}</span><br>Like</a>
-        <a href="#" class="action-item">💬 <span>0</span><br>Comms</a>
-        <a href="#" class="action-item">👁️ <span>{{ vibe.views or 0 }}</span><br>Vues</a>
-        <a href="#" class="action-item">🔗<br>Partager</a>
-    </div>
+    <div class="vibe-card-immersive">
+        {% if prev_id %}<a href="{{ url_for('view_vibe', vibe_id=prev_id) }}" class="nav-arrow nav-prev">❮</a>{% endif %}
+        {% if next_id %}<a href="{{ url_for('view_vibe', vibe_id=next_id) }}" class="nav-arrow nav-next">❯</a>{% endif %}
 
-    <div style="padding: 15px; background: #111; color: white;">
-        <p><strong>@{{ vibe.author.username }}</strong> : {{ vibe.title }}</p>
-        <a href="{{ url_for('profile', username=vibe.author.username) }}" style="color: #888; font-size: 12px; text-decoration: none;">← Retour au profil</a>
+        <div class="media-container">
+            {% if vibe.category == 'Photos' %}
+                <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}">
+            {% else %}
+                <video controls autoplay loop>
+                    <source src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" type="video/mp4">
+                </video>
+            {% endif %}
+        </div>
+
+        <div class="vibe-footer" style="padding: 15px; background: #1a1a1a;">
+            <span style="font-size: 18px; color: white; display: block; margin-bottom: 10px;"><strong>{{ vibe.title }}</strong></span>
+            
+            <div class="vibe-actions">
+                <a href="{{ url_for('like_video', video_id=vibe.id) }}" class="action-link" style="color: #ff4b2b;">
+                    ❤️ {{ vibe.likes|length }}
+                </a>
+
+                <div class="action-link" onclick="toggleComments('{{ vibe.id }}')">
+                    💬 {{ vibe.comments|length }}
+                </div>
+
+                <div class="action-link" style="color: #888; cursor: default;">
+                    👁️ {{ vibe.views or 0 }}
+                </div>
+
+                <div class="action-link" onclick="copyLink('{{ vibe.id }}')">
+                    🔗 Partager
+                </div>
+            </div>
+
+            <div id="comment-section-{{ vibe.id }}" class="comment-area">
+                <form action="{{ url_for('add_comment', video_id=vibe.id) }}" method="POST" style="display: flex; gap: 8px;">
+                    <input type="text" name="content" placeholder="Ton avis..." required 
+                           style="flex: 1; background: #333; border: 1px solid #444; color: white; padding: 8px 12px; border-radius: 20px; font-size: 13px;">
+                    <button type="submit" style="background: #ff4b2b; border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;">OK</button>
+                </form>
+
+                <div class="comment-list">
+                    {% for comment in vibe.comments %}
+                        <div class="comment-item">
+                            <strong style="color: #ff4b2b;">@{{ comment.author.username }}</strong> {{ comment.content }}
+                        </div>
+                    {% else %}
+                        <p style="font-size: 11px; color: #666; text-align: center;">Aucun commentaire.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+    // On réutilise tes fonctions du Dashboard pour la cohérence totale
+    function toggleComments(videoId) {
+        var section = document.getElementById("comment-section-" + videoId);
+        section.style.display = (section.style.display === "none" || section.style.display === "") ? "block" : "none";
+    }
+
+    function copyLink(videoId) {
+        const url = window.location.origin + "/vibe/" + videoId; 
+        navigator.clipboard.writeText(url).then(() => {
+            alert("Lien de la Vibe copié ! 🌍");
+        });
+    }
+</script>
 {% endblock %}

@@ -381,11 +381,16 @@ def increment_view(video_id):
 def view_vibe(vibe_id):
     vibe = Video.query.get_or_404(vibe_id)
     
-    # On récupère toutes les vibes de cet utilisateur pour le défilement
-    user_vibes = Video.query.filter_by(user_id=vibe.user_id).order_by(Video.created_at.desc()).all()
+    # --- SYNCHRONISATION DES VUES ---
+    # Dès qu'on ouvre la page, on compte une vue (comme sur YouTube)
+    if vibe.views is None: vibe.views = 0
+    vibe.views += 1
+    db.session.commit()
     
-    # Trouver l'index actuel pour calculer suivant/précédent
-    vibe_ids = [v.id for v in user_vibes]
+    # --- LOGIQUE DE DÉFILEMENT (Navigation) ---
+    # On récupère les IDs pour savoir qui est avant et après
+    all_vibes = Video.query.order_by(Video.created_at.desc()).all()
+    vibe_ids = [v.id for v in all_vibes]
     current_index = vibe_ids.index(vibe.id)
     
     next_id = vibe_ids[current_index + 1] if current_index + 1 < len(vibe_ids) else None
