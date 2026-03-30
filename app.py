@@ -380,7 +380,21 @@ def increment_view(video_id):
 @app.route('/vibe/<int:vibe_id>')
 def view_vibe(vibe_id):
     vibe = Video.query.get_or_404(vibe_id)
-    return render_template('view_vibe.html', vibe=vibe)
+    
+    # On récupère toutes les vibes de cet utilisateur pour le défilement
+    user_vibes = Video.query.filter_by(user_id=vibe.user_id).order_by(Video.created_at.desc()).all()
+    
+    # Trouver l'index actuel pour calculer suivant/précédent
+    vibe_ids = [v.id for v in user_vibes]
+    current_index = vibe_ids.index(vibe.id)
+    
+    next_id = vibe_ids[current_index + 1] if current_index + 1 < len(vibe_ids) else None
+    prev_id = vibe_ids[current_index - 1] if current_index > 0 else None
+
+    return render_template('view_vibe.html', 
+                           vibe=vibe, 
+                           next_id=next_id, 
+                           prev_id=prev_id)
 
 
 @app.route('/accept_friend/<int:request_id>')

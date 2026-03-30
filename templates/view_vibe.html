@@ -1,23 +1,58 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div style="max-width: 600px; margin: 20px auto; padding: 15px; background: #1a1a1a; border-radius: 15px; text-align: center;">
-    <h2 style="color: white;">{{ vibe.title }}</h2>
+<style>
+    .vibe-player-container {
+        max-width: 500px; margin: 0 auto; background: #000;
+        position: relative; border-radius: 15px; overflow: hidden;
+    }
+    .media-box { width: 100%; min-height: 400px; display: flex; align-items: center; justify-content: center; }
+    .media-box img, .media-box video { width: 100%; max-height: 80vh; object-fit: contain; }
     
-    <div style="margin: 20px 0;">
+    .nav-btn {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        background: rgba(255,255,255,0.2); color: white; border: none;
+        padding: 15px; border-radius: 50%; cursor: pointer; text-decoration: none;
+    }
+    .nav-prev { left: 10px; }
+    .nav-next { right: 10px; }
+
+    .vibe-actions {
+        display: flex; justify-content: space-around; padding: 15px;
+        background: #111; border-top: 1px solid #222;
+    }
+    .action-item { color: #ccc; text-align: center; font-size: 14px; text-decoration: none; }
+    .action-item i { display: block; font-size: 20px; color: #ff4b2b; }
+</style>
+
+<div class="vibe-player-container">
+    {% if prev_id %}
+        <a href="{{ url_for('view_vibe', vibe_id=prev_id) }}" class="nav-btn nav-prev">❮</a>
+    {% endif %}
+    
+    {% if next_id %}
+        <a href="{{ url_for('view_vibe', vibe_id=next_id) }}" class="nav-btn nav-next">❯</a>
+    {% endif %}
+
+    <div class="media-box">
         {% if vibe.category == 'Photos' %}
-            <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" style="width: 100%; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+            <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}">
         {% else %}
-            <video controls autoplay style="width: 100%; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+            <video controls autoplay loop>
                 <source src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" type="video/mp4">
-                Votre navigateur ne supporte pas la lecture de vidéos.
             </video>
         {% endif %}
     </div>
 
-    <div style="border-top: 1px solid #333; padding-top: 15px; margin-top: 15px;">
-        <p style="color: #888;">Posté par <strong style="color: #ff4b2b;">@{{ vibe.author.username }}</strong></p>
-        <a href="{{ url_for('profile', username=vibe.author.username) }}" style="display: inline-block; margin-top: 10px; color: #bbb; text-decoration: none; font-size: 14px;">← Retour au profil</a>
+    <div class="vibe-actions">
+        <a href="#" class="action-item">❤️ <span>{{ vibe.likes or 0 }}</span><br>Like</a>
+        <a href="#" class="action-item">💬 <span>0</span><br>Comms</a>
+        <a href="#" class="action-item">👁️ <span>{{ vibe.views or 0 }}</span><br>Vues</a>
+        <a href="#" class="action-item">🔗<br>Partager</a>
+    </div>
+
+    <div style="padding: 15px; background: #111; color: white;">
+        <p><strong>@{{ vibe.author.username }}</strong> : {{ vibe.title }}</p>
+        <a href="{{ url_for('profile', username=vibe.author.username) }}" style="color: #888; font-size: 12px; text-decoration: none;">← Retour au profil</a>
     </div>
 </div>
 {% endblock %}
