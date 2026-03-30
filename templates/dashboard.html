@@ -129,10 +129,19 @@
         </div>
         
         {% if video.category == 'Photos' %}
-            <img src="{{ url_for('static', filename='uploads/' + video.filename) }}" class="vibe-media" alt="{{ video.title }}">
+            {% if video.filename.startswith('http') %}
+                <img src="{{ video.filename }}" class="vibe-media" alt="{{ video.title }}">
+            {% else %}
+                <img src="{{ url_for('static', filename='uploads/' + video.filename) }}" class="vibe-media" alt="{{ video.title }}">
+            {% endif %}
         {% else %}
             <video class="vibe-media" controls preload="metadata">
-                <source src="{{ url_for('static', filename='uploads/' + video.filename) }}" type="video/mp4">
+                {% if video.filename.startswith('http') %}
+                    <source src="{{ video.filename }}" type="video/mp4">
+                {% else %}
+                    <source src="{{ url_for('static', filename='uploads/' + video.filename) }}" type="video/mp4">
+                {% endif %}
+                Votre navigateur ne supporte pas la lecture de vidéos.
             </video>
         {% endif %}
 
@@ -185,13 +194,11 @@
 </div>
 
 <script>
-    // 1. GESTION DES COMMENTAIRES
     function toggleComments(videoId) {
         var section = document.getElementById("comment-section-" + videoId);
         section.style.display = (section.style.display === "none" || section.style.display === "") ? "block" : "none";
     }
 
-    // 2. COPIE DU LIEN
     function copyLink(videoId) {
         const url = window.location.origin + "/profile/" + videoId; 
         navigator.clipboard.writeText(url).then(() => {
@@ -199,23 +206,22 @@
         });
     }
 
-    // 3. SCRIPT MAGIQUE : COMPTEUR DE VUES
     document.querySelectorAll('video').forEach(videoElement => {
         videoElement.addEventListener('play', function() {
-            // On récupère l'ID depuis l'ID de la section commentaire parente
             const card = this.closest('.vibe-card');
-            const videoId = card.querySelector('[id^="comment-section-"]').id.split('-').pop();
-            
-            fetch(`/increment_view/${videoId}`, { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if(data.status === 'success') {
-                        document.getElementById(`view-count-${videoId}`).innerText = data.new_views;
-                    }
-                })
-                .catch(err => console.error("Erreur compteur de vues:", err));
-        }, { once: true }); // On ne compte qu'une vue par lecture
+            const commentSection = card.querySelector('[id^="comment-section-"]');
+            if(commentSection) {
+                const videoId = commentSection.id.split('-').pop();
+                fetch(`/increment_view/${videoId}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.status === 'success') {
+                            document.getElementById(`view-count-${videoId}`).innerText = data.new_views;
+                        }
+                    })
+                    .catch(err => console.error("Erreur compteur de vues:", err));
+            }
+        }, { once: true });
     });
 </script>
-
 {% endblock %}
