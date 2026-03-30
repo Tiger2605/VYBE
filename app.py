@@ -1,5 +1,6 @@
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -152,12 +153,24 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        phone = request.form.get('phone') # NOUVEAU : Récupération du téléphone si fourni
+        phone = request.form.get('phone') 
         
-        new_user = User(username=username, password=password, phone=phone)
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('login'))
+        # --- SÉCURITÉ : On transforme le mot de passe en Hash ---
+        # On ne stocke JAMAIS le mot de passe en clair
+        hashed_pw = generate_password_hash(password)
+        
+        # On enregistre hashed_pw dans la colonne password
+        new_user = User(username=username, password=hashed_pw, phone=phone)
+        
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash("Compte créé avec succès ! Connectez-vous.", "success")
+            return redirect(url_for('login'))
+        except:
+            db.session.rollback()
+            flash("Ce nom d'utilisateur existe déjà.", "error")
+            return redirect(url_for('register'))
     
     return render_template('register.html')
 
@@ -169,14 +182,14 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        if user and user.password == password:
+        # --- SÉCURITÉ : On compare le Hash stocké avec le mot de passe tapé ---
+        if user and check_password_hash(user.password, password):
             session['user_id'] = user.id 
             session['username'] = user.username
             return redirect(url_for('dashboard'))
         else:
-            # On utilise flash pour envoyer le message d'erreur
             flash("Identifiants incorrects. Veuillez réessayer.", "error")
-            return redirect(url_for('login')) # On recharge la page de login
+            return redirect(url_for('login'))
             
     return render_template('login.html')
 
