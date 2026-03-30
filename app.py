@@ -27,18 +27,21 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- CONFIGURATION DE LA BASE DE DONNÉES (HYBRIDE) ---
-# Si on est sur Render, DATABASE_URL sera remplie. Sinon, on utilise SQLite.
+# --- CONFIGURATION DE LA BASE DE DONNÉES (STRICTE) ---
 database_url = os.environ.get('DATABASE_URL')
 
-if database_url:
-    # Correction pour SQLAlchemy : il faut absolument 'postgresql://' (avec un L)
+if not database_url:
+    # Si on est en local sur ton PC, on peut garder SQLite pour tester
+    # Mais sur Render, on veut que ça s'arrête si DATABASE_URL manque
+    if os.environ.get('RENDER'):
+        raise RuntimeError("❌ DATABASE_URL manquante sur Render. Vérifie l'onglet Environment !")
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibe_africa.db'
+else:
+    # Correction automatique du préfixe pour Render/Heroku
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    # Ton fichier local pour travailler sans connexion internet
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibe_africa.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
