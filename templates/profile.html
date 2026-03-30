@@ -57,7 +57,7 @@
     .vibe-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 5px; /* Un peu plus d'espace */
+        gap: 5px;
         margin-bottom: 40px;
     }
     .grid-item {
@@ -65,7 +65,7 @@
         background: #1a1a1a;
         position: relative;
         overflow: hidden;
-        border-radius: 8px; /* Plus arrondi */
+        border-radius: 8px;
         transition: transform 0.2s;
     }
     .grid-item:hover { transform: scale(1.02); }
@@ -129,7 +129,7 @@
     <div class="vibe-grid">
         {% for vibe in vibes %}
             <div class="grid-item">
-                <a href="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" target="_blank">
+                <a href="{{ url_for('view_vibe', vibe_id=vibe.id) }}">
                     {% if vibe.category == 'Photos' %}
                         <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}">
                         <span class="grid-badge">📸</span>

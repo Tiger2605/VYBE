@@ -377,6 +377,12 @@ def increment_view(video_id):
     db.session.commit()
     return {'status': 'success', 'new_views': video.views}, 200
 
+@app.route('/vibe/<int:vibe_id>')
+def view_vibe(vibe_id):
+    vibe = Video.query.get_or_404(vibe_id)
+    return render_template('view_vibe.html', vibe=vibe)
+
+
 @app.route('/accept_friend/<int:request_id>')
 def accept_friend(request_id):
     if 'user_id' not in session:
