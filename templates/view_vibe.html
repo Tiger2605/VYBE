@@ -1,19 +1,23 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div style="max-width: 600px; margin: 20px auto; text-align: center; background: #111; padding: 20px; border-radius: 15px;">
-    <h3 style="color: white; margin-bottom: 15px;">{{ vibe.title }}</h3>
+<div style="max-width: 600px; margin: 20px auto; padding: 15px; background: #1a1a1a; border-radius: 15px; text-align: center;">
+    <h2 style="color: white;">{{ vibe.title }}</h2>
     
-    {% if vibe.category == 'Photos' %}
-        <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" style="width: 100%; border-radius: 10px;">
-    {% else %}
-        <video controls autoplay style="width: 100%; border-radius: 10px;">
-            <source src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" type="video/mp4">
-        </video>
-    {% endif %}
-    
-    <div style="margin-top: 20px;">
-        <p style="color: #888;">Publié par <strong>@{{ vibe.author.username }}</strong></p>
-        <a href="{{ url_for('profile', username=vibe.author.username) }}" style="color: #ff4b2b; text-decoration: none;">Voir le profil</a>
+    <div style="margin: 20px 0;">
+        {% if vibe.category == 'Photos' %}
+            <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" style="width: 100%; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+        {% else %}
+            <video controls autoplay style="width: 100%; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+                <source src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" type="video/mp4">
+                Votre navigateur ne supporte pas la lecture de vidéos.
+            </video>
+        {% endif %}
+    </div>
+
+    <div style="border-top: 1px solid #333; padding-top: 15px; margin-top: 15px;">
+        <p style="color: #888;">Posté par <strong style="color: #ff4b2b;">@{{ vibe.author.username }}</strong></p>
+        <a href="{{ url_for('profile', username=vibe.author.username) }}" style="display: inline-block; margin-top: 10px; color: #bbb; text-decoration: none; font-size: 14px;">← Retour au profil</a>
     </div>
 </div>
 {% endblock %}
