@@ -118,7 +118,7 @@ class FriendRequest(db.Model):
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
-    filename = db.Column(db.String(100))
+    filename = db.Column(db.String(500), nullable=False)
     category = db.Column(db.String(50), nullable=False, default='Autres')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     likes = db.relationship('Like', backref='video', lazy=True)
@@ -463,8 +463,13 @@ def create_group():
 
 # On place la création des tables ICI, pour qu'elle s'exécute 
 # que ce soit via Python local ou via Gunicorn sur Render.
+
 with app.app_context():
+    # ATTENTION : Cette ligne efface TOUTES les données existantes (utilisateurs, vidéos, commentaires)
+    # Ne l'utilise que cette fois-ci pour mettre à jour la structure.
+    db.drop_all() 
     db.create_all()
+    print("Base de données reconstruite avec succès !")
 
 if __name__ == '__main__':
     app.run(debug=True)
