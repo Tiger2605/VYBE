@@ -212,19 +212,26 @@ def logout():
 @app.route('/profile/')
 @app.route('/profile/<username>')
 def profile(username=None):
-    # CAS 1 : L'utilisateur n'est pas connecté et n'a pas spécifié de nom (clic sur icône Profil)
+    # CAS 1 : Redirection si l'utilisateur clique sur "Profil" sans être connecté
     if username is None and 'user_id' not in session:
         return render_template('profile_guest.html')
 
-    # CAS 2 : L'utilisateur est connecté et clique sur son propre profil (via la barre de tâche)
+    # CAS 2 : L'utilisateur connecté clique sur son propre profil dans la barre de tâches
     if username is None and 'user_id' in session:
         username = session['username']
     
-    # Récupération de l'utilisateur ou erreur 404 si le nom n'existe pas
+    # Récupération de l'utilisateur cible
     user = User.query.filter_by(username=username).first_or_404()
     
-    # Récupération des publications (Vibes) de cet utilisateur
+    # Récupération des publications (Vibes) triées par date
     vibes = Video.query.filter_by(user_id=user.id).order_by(Video.created_at.desc()).all()
+    
+    # --- CALCUL DU COMPTEUR D'AMIS ---
+    # On compte toutes les requêtes 'accepted' où l'utilisateur est soit expéditeur, soit receveur
+    friends_count = FriendRequest.query.filter(
+        ((FriendRequest.sender_id == user.id) | (FriendRequest.receiver_id == user.id)),
+        (FriendRequest.status == 'accepted')
+    ).count()
     
     me = None
     friendship = None
@@ -232,14 +239,13 @@ def profile(username=None):
     
     if 'user_id' in session:
         me = User.query.get(session['user_id'])
-        # Vérification si l'utilisateur regarde son propre profil
         if me.id == user.id:
             is_own_profile = True
         
-        # Vérification du statut d'amitié
+        # Vérification si "Moi" et "Lui" sommes amis
         friendship = FriendRequest.query.filter(
-            (((FriendRequest.sender_id == me.id) & (FriendRequest.receiver_id == user.id)) |
-             ((FriendRequest.sender_id == user.id) & (FriendRequest.receiver_id == me.id))),
+            ((FriendRequest.sender_id == me.id) & (FriendRequest.receiver_id == user.id)) |
+            ((FriendRequest.sender_id == user.id) & (FriendRequest.receiver_id == me.id)),
             FriendRequest.status == 'accepted'
         ).first()
         
@@ -248,7 +254,8 @@ def profile(username=None):
                            current_user_obj=me, 
                            friendship=friendship, 
                            vibes=vibes, 
-                           is_own_profile=is_own_profile)
+                           is_own_profile=is_own_profile,
+                           friends_count=friends_count) # On envoie le compteur au HTML
 
 @app.route('/follow/<username>')
 def follow(username):

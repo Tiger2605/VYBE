@@ -56,8 +56,8 @@
     
     .vibe-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr); /* 3 colonnes */
-        gap: 2px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px; /* Un peu plus d'espace */
         margin-bottom: 40px;
     }
     .grid-item {
@@ -65,10 +65,12 @@
         background: #1a1a1a;
         position: relative;
         overflow: hidden;
-        border-radius: 4px;
+        border-radius: 8px; /* Plus arrondi */
+        transition: transform 0.2s;
     }
-    .grid-item img, .grid-item video { width: 100%; height: 100%; object-fit: cover; }
-    .grid-badge { position: absolute; top: 5px; right: 5px; font-size: 10px; background: rgba(0,0,0,0.6); padding: 2px 4px; border-radius: 3px; }
+    .grid-item:hover { transform: scale(1.02); }
+    .grid-item img, .grid-item video { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+    .grid-badge { position: absolute; top: 5px; right: 5px; font-size: 10px; background: rgba(0,0,0,0.6); padding: 2px 4px; border-radius: 3px; z-index: 2; pointer-events: none; }
 </style>
 
 <div class="profile-container">
@@ -90,7 +92,8 @@
                 <span class="stats-label">Abonnés</span>
             </div>
             <div class="stats-item">
-                <span class="stats-num">0</span> <span class="stats-label">Amis</span>
+                <span class="stats-num">{{ friends_count }}</span>
+                <span class="stats-label">Amis</span>
             </div>
         </div>
 
@@ -126,13 +129,15 @@
     <div class="vibe-grid">
         {% for vibe in vibes %}
             <div class="grid-item">
-                {% if vibe.category == 'Photos' %}
-                    <img src="{{ url_for('static', filename='uploads/' + vibe.filename) }}">
-                    <span class="grid-badge">📸</span>
-                {% else %}
-                    <video src="{{ url_for('static', filename='uploads/' + vibe.filename) }}"></video>
-                    <span class="grid-badge">🎥</span>
-                {% endif %}
+                <a href="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" target="_blank">
+                    {% if vibe.category == 'Photos' %}
+                        <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}">
+                        <span class="grid-badge">📸</span>
+                    {% else %}
+                        <video src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" muted></video>
+                        <span class="grid-badge">🎥</span>
+                    {% endif %}
+                </a>
             </div>
         {% else %}
             <div style="grid-column: span 3; text-align: center; padding: 40px; color: #444;">
