@@ -132,6 +132,11 @@ class Message(db.Model):
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+class AppUpdate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100))
+    message = db.Column(db.Text)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
 
 # --- ROUTES ---
 
@@ -492,16 +497,19 @@ def create_group():
         
     return redirect(url_for('messages_list'))
 
-
+@app.route('/updates')
+def show_updates():
+    updates = AppUpdate.query.order_by(AppUpdate.date.desc()).all()
+    return render_template('updates.html', updates=updates)
 # On place la création des tables ICI, pour qu'elle s'exécute 
 # que ce soit via Python local ou via Gunicorn sur Render.
 
 with app.app_context():
     # ATTENTION : Cette ligne efface TOUTES les données existantes (utilisateurs, vidéos, commentaires)
     # Ne l'utilise que cette fois-ci pour mettre à jour la structure.
-    db.drop_all() 
+    # db.drop_all() 
     db.create_all()
-    print("Base de données reconstruite avec succès !")
+    print("VIBE AFRICA : Base de données prête et sécurisée.")
 
 if __name__ == '__main__':
     app.run(debug=True)
