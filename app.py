@@ -1,3 +1,4 @@
+import re
 import os
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,10 +7,24 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import datetime
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Mail, Message 
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
+
+app.config.update(
+    MAIL_SERVER='smpt.gmail.com',
+    MAIL_PORT=587,
+    MAIL_USE_TLS=True,
+    MAIL_USERNAME='votre_email@gmail.com',
+    MAIL_PASSWORD='votre_mot_de_passe_d_application', # Ce n'est pas votre mot de passe habituel !
+    MAIL_DEFAULT_SENDER='votre_email@gmail.com'
+
+)
+
+mail = Mail(app)
 
 cloudinary.config(
     cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -57,6 +72,9 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+#  INITIALISATION DES OUTILS DE SECURITE
+s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+
 # ---------------------------------------------------------
 # LE RESTE DE TES MODÈLES (User, Group, Video...) RESTE IDENTIQUE
 # ---------------------------------------------------------
@@ -77,6 +95,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False) # 
     bio = db.Column(db.String(200), default="Salut, je suis sur VIBE AFRICA !")
     google_id = db.Column(db.String(100), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True) # NOUVEAU : Numéro de téléphone pour les contacts
@@ -159,18 +178,38 @@ def index():
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
-@limiter.limit("3 per hour") # Empeche quelqu'un de creer 1000 faux comptes d'un coup
+@limiter.limit("3 per hour") 
 def register():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        phone = request.form.get('phone') 
+        # 1. On récupère et on nettoie les espaces inutiles (.strip())
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        phone = request.form.get('phone', '').strip()
         
-        # --- SÉCURITÉ : On transforme le mot de passe en Hash ---
-        # On ne stocke JAMAIS le mot de passe en clair
+        # --- 2. VÉRIFICATION DES CHAMPS VIDES ---
+        if not username or not password or not phone:
+            flash("Erreur : Tous les champs doivent être remplis.", "error")
+            return redirect(url_for('register'))
+
+        # --- 3. VALIDATION DU USERNAME (3 à 20 caractères, pas de symboles bizarres) ---
+        if not re.match(r"^[a-zA-Z0-9_]{3,20}$", username):
+            flash("Le nom d'utilisateur doit contenir entre 3 et 20 caractères (lettres, chiffres ou _).", "error")
+            return redirect(url_for('register'))
+
+        # --- 4. VALIDATION DU TÉLÉPHONE (Format RDC : 08... ou 09...) ---
+        # Vérifie si le numéro commence par 08 ou 09 et contient exactement 10 chiffres
+        if not re.match(r"^0[89][0-9]{8}$", phone):
+            flash("Format de numéro invalide. Utilisez 08... ou 09... (10 chiffres).", "error")
+            return redirect(url_for('register'))
+
+        # --- 5. VÉRIFICATION D'UNICITÉ (Avant de tenter l'insertion) ---
+        user_exists = User.query.filter_by(username=username).first()
+        if user_exists:
+            flash("Ce nom d'utilisateur est déjà utilisé.", "error")
+            return redirect(url_for('register'))
+
+        # --- 6. HACHAGE ET ENREGISTREMENT ---
         hashed_pw = generate_password_hash(password)
-        
-        # On enregistre hashed_pw dans la colonne password
         new_user = User(username=username, password=hashed_pw, phone=phone)
         
         try:
@@ -178,9 +217,11 @@ def register():
             db.session.commit()
             flash("Compte créé avec succès ! Connectez-vous.", "success")
             return redirect(url_for('login'))
-        except:
+        except Exception as e:
             db.session.rollback()
-            flash("Ce nom d'utilisateur existe déjà.", "error")
+            # On log l'erreur pour toi (le dev) mais on reste vague pour l'utilisateur
+            print(f"Erreur d'insertion : {e}")
+            flash("Une erreur interne est survenue. Réessayez plus tard.", "error")
             return redirect(url_for('register'))
     
     return render_template('register.html')
@@ -207,7 +248,50 @@ def login():
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
-    return "🚀 Oups ! Tu vas trop vite pour VIBE. Respire un peu et réessaie dans une minute.", 429
+    return render_template('429.html'), 429
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+        if user:
+            # Générer un token de réinitialisation
+            serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+            token = serializer.dumps(user.id, salt='password-reset')
+            
+            # Envoyer l'email de réinitialisation
+            msg = Message("Réinitialisation du mot de passe",
+                          sender=app.config['MAIL_USERNAME'],
+                          recipients=[user.email])
+            msg.body = f"Bonjour {user.username},\n\nCliquez sur le lien suivant pour réinitialiser votre mot de passe :\n{url_for('reset_password', token=token, _external=True)}"
+            mail.send(msg)
+            
+            flash("Un email de réinitialisation vous a été envoyé.", "success")
+        else:
+            flash("Aucun utilisateur trouvé avec cette adresse email.", "error")
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    try:
+        # On vérifie si le jeton est valide et n'a pas expiré (ex: 30 minutes)
+        email = s.loads(token, salt='password-reset', max_age=1800)
+    except:
+        flash("Le lien de réinitialisation est invalide ou a expiré.", "error")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            user.password = generate_password_hash(new_password)
+            db.session.commit()
+            flash("Votre mot de passe a été mis à jour !", "success")
+            return redirect(url_for('login'))
+            
+    return render_template('reset_password_form.html')
 
 @app.route('/dashboard')
 def dashboard():
@@ -538,7 +622,6 @@ def show_updates():
 
 with app.app_context():
     # ATTENTION : Cette ligne efface TOUTES les données existantes (utilisateurs, vidéos, commentaires)
-    # Ne l'utilise que cette fois-ci pour mettre à jour la structure.
     # db.drop_all() 
     db.create_all()
     print("VIBE AFRICA : Base de données prête et sécurisée.")
