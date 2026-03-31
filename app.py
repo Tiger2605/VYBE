@@ -14,14 +14,33 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-
 # 1. CRÉATION DE L'APPLICATION
 app = Flask(__name__)
 
-# 2. CONFIGURATION SÉCURISÉE DE LA CLE SECRETE
-
+# 2. CONFIGURATION DE LA CLÉ SECRÈTE
 app.secret_key = os.environ.get('SECRET_KEY', 'vybe_africa_secret_key_2026')
+
+# --- CONFIGURATION DE LA BASE DE DONNÉES ---
+database_url = os.environ.get('DATABASE_URL')
+
+if not database_url:
+    if os.environ.get('RENDER'):
+        raise RuntimeError("❌ DATABASE_URL manquante sur Render. Vérifie l'onglet Environment !")
+    else:
+        # SQLite local pour le développement
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibe_africa.db'
+else:
+    # Correction pour SQLAlchemy 2.0 (postgres:// -> postgresql://)
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# 3. INITIALISATION DES EXTENSIONS (Le bloc demandé)
 db.init_app(app)
+migrate = Migrate(app, db)  # Flask-Migrate est maintenant bien lié
+s = URLSafeTimedSerializer(app.secret_key)
 
 # --- CONFIGURATION EMAIL ---
 app.config.update(
@@ -32,7 +51,6 @@ app.config.update(
     MAIL_PASSWORD=os.environ.get('MAIL_PASS'),
     MAIL_DEFAULT_SENDER=os.environ.get('MAIL_USER')
 )
-
 mail = Mail(app)
 
 # --- CONFIGURATION CLOUDINARY ---
@@ -50,7 +68,6 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-
 # --- CONFIGURATION DE L'UPLOAD ---
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'png', 'jpg', 'jpeg', 'gif'}
@@ -58,25 +75,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# --- CONFIGURATION DE LA BASE DE DONNÉES ---
-database_url = os.environ.get('DATABASE_URL')
-
-if not database_url:
-    if os.environ.get('RENDER'):
-        raise RuntimeError("❌ DATABASE_URL manquante sur Render. Vérifie l'onglet Environment !")
-    else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibe_africa.db'
-else:
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# 3. INITIALISATION DES EXTENSIONS DB ET SECURITE
-db.init_app(app)
-s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 # --- ROUTES ---
 
@@ -88,34 +86,27 @@ def index():
 @limiter.limit("3 per hour") 
 def register():
     if request.method == 'POST':
-        # 1. On récupère et on nettoie les espaces inutiles (.strip())
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         phone = request.form.get('phone', '').strip()
         
-        # --- 2. VÉRIFICATION DES CHAMPS VIDES ---
         if not username or not password or not phone:
             flash("Erreur : Tous les champs doivent être remplis.", "error")
             return redirect(url_for('register'))
 
-        # --- 3. VALIDATION DU USERNAME (3 à 20 caractères, pas de symboles bizarres) ---
         if not re.match(r"^[a-zA-Z0-9_]{3,20}$", username):
             flash("Le nom d'utilisateur doit contenir entre 3 et 20 caractères (lettres, chiffres ou _).", "error")
             return redirect(url_for('register'))
 
-        # --- 4. VALIDATION DU TÉLÉPHONE (Format RDC : 08... ou 09...) ---
-        # Vérifie si le numéro commence par 08 ou 09 et contient exactement 10 chiffres
         if not re.match(r"^0[89][0-9]{8}$", phone):
             flash("Format de numéro invalide. Utilisez 08... ou 09... (10 chiffres).", "error")
             return redirect(url_for('register'))
 
-        # --- 5. VÉRIFICATION D'UNICITÉ (Avant de tenter l'insertion) ---
         user_exists = User.query.filter_by(username=username).first()
         if user_exists:
             flash("Ce nom d'utilisateur est déjà utilisé.", "error")
             return redirect(url_for('register'))
 
-        # --- 6. HACHAGE ET ENREGISTREMENT ---
         hashed_pw = generate_password_hash(password)
         new_user = User(username=username, password=hashed_pw, phone=phone)
         
@@ -126,7 +117,6 @@ def register():
             return redirect(url_for('login'))
         except Exception as e:
             db.session.rollback()
-            # On log l'erreur pour toi (le dev) mais on reste vague pour l'utilisateur
             print(f"Erreur d'insertion : {e}")
             flash("Une erreur interne est survenue. Réessayez plus tard.", "error")
             return redirect(url_for('register'))
@@ -134,7 +124,7 @@ def register():
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute") # limiter les tentives de connexion pour elever la securite
+@limiter.limit("5 per minute")
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -142,7 +132,6 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        # --- SÉCURITÉ : On compare le Hash stocké avec le mot de passe tapé ---
         if user and check_password_hash(user.password, password):
             session['user_id'] = user.id 
             session['username'] = user.username
@@ -163,17 +152,12 @@ def forgot_password():
         email = request.form.get('email')
         user = User.query.filter_by(email=email).first()
         if user:
-            # Générer un token de réinitialisation
-            serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-            token = serializer.dumps(user.id, salt='password-reset')
-            
-            # Envoyer l'email de réinitialisation
+            token = s.dumps(user.id, salt='password-reset')
             msg = Message("Réinitialisation du mot de passe",
                           sender=app.config['MAIL_USERNAME'],
                           recipients=[user.email])
             msg.body = f"Bonjour {user.username},\n\nCliquez sur le lien suivant pour réinitialiser votre mot de passe :\n{url_for('reset_password', token=token, _external=True)}"
             mail.send(msg)
-            
             flash("Un email de réinitialisation vous a été envoyé.", "success")
         else:
             flash("Aucun utilisateur trouvé avec cette adresse email.", "error")
@@ -182,16 +166,14 @@ def forgot_password():
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     try:
-        # On vérifie si le jeton est valide et n'a pas expiré (ex: 30 minutes)
-        email = s.loads(token, salt='password-reset', max_age=1800)
+        user_id = s.loads(token, salt='password-reset', max_age=1800)
     except:
         flash("Le lien de réinitialisation est invalide ou a expiré.", "error")
         return redirect(url_for('login'))
 
     if request.method == 'POST':
         new_password = request.form.get('password')
-        user = User.query.filter_by(email=email).first()
-        
+        user = User.query.get(user_id)
         if user:
             user.password = generate_password_hash(new_password)
             db.session.commit()
@@ -240,22 +222,15 @@ def logout():
 @app.route('/profile/')
 @app.route('/profile/<username>')
 def profile(username=None):
-    # CAS 1 : Redirection si l'utilisateur clique sur "Profil" sans être connecté
     if username is None and 'user_id' not in session:
         return render_template('profile_guest.html')
 
-    # CAS 2 : L'utilisateur connecté clique sur son propre profil dans la barre de tâches
     if username is None and 'user_id' in session:
         username = session['username']
     
-    # Récupération de l'utilisateur cible
     user = User.query.filter_by(username=username).first_or_404()
-    
-    # Récupération des publications (Vibes) triées par date
     vibes = Video.query.filter_by(user_id=user.id).order_by(Video.created_at.desc()).all()
     
-    # --- CALCUL DU COMPTEUR D'AMIS ---
-    # On compte toutes les requêtes 'accepted' où l'utilisateur est soit expéditeur, soit receveur
     friends_count = FriendRequest.query.filter(
         ((FriendRequest.sender_id == user.id) | (FriendRequest.receiver_id == user.id)),
         (FriendRequest.status == 'accepted')
@@ -270,11 +245,10 @@ def profile(username=None):
         if me.id == user.id:
             is_own_profile = True
         
-        # Vérification si "Moi" et "Lui" sommes amis
         friendship = FriendRequest.query.filter(
             ((FriendRequest.sender_id == me.id) & (FriendRequest.receiver_id == user.id)) |
             ((FriendRequest.sender_id == user.id) & (FriendRequest.receiver_id == me.id)),
-            FriendRequest.status == 'accepted'
+            (FriendRequest.status == 'accepted')
         ).first()
         
     return render_template('profile.html', 
@@ -283,7 +257,7 @@ def profile(username=None):
                            friendship=friendship, 
                            vibes=vibes, 
                            is_own_profile=is_own_profile,
-                           friends_count=friends_count) # On envoie le compteur au HTML
+                           friends_count=friends_count)
 
 @app.route('/follow/<username>')
 def follow(username):
@@ -333,36 +307,27 @@ def upload_video():
         title = request.form.get('title')
         category = request.form.get('category') 
         
-        # On vérifie si le fichier existe (on peut garder allowed_file ou laisser Cloudinary gérer)
         if file and file.filename != '':
             try:
-                # 1. ENVOI VERS CLOUDINARY
-                # resource_type="auto" permet de gérer Images ET Vidéos sans changer le code
                 upload_result = cloudinary.uploader.upload(
                     file, 
                     resource_type="auto",
                     folder="vibe_africa_uploads"
                 )
-                
-                # 2. RÉCUPÉRATION DE L'URL (C'est le lien magique qui commence par https://)
                 file_url = upload_result['secure_url']
                 
-                # 3. ENREGISTREMENT DANS TA BASE POSTGRESQL
-                # IMPORTANT : On stocke 'file_url' dans la colonne 'filename' de ta table Video
                 new_video = Video(
                     title=title, 
-                    filename=file_url,  # Ici on remplace le nom simple par l'URL complète
+                    filename=file_url,
                     user_id=session['user_id'], 
                     category=category
                 )
                 
                 db.session.add(new_video)
                 db.session.commit()
-                
                 return redirect(url_for('dashboard'))
 
             except Exception as e:
-                # En cas d'erreur réseau ou de clé API invalide
                 print(f"Erreur lors de l'upload Cloudinary : {e}")
                 return f"Erreur de mise en ligne : {e}", 500
             
@@ -409,14 +374,10 @@ def increment_view(video_id):
 def view_vibe(vibe_id):
     vibe = Video.query.get_or_404(vibe_id)
     
-    # --- SYNCHRONISATION DES VUES ---
-    # Dès qu'on ouvre la page, on compte une vue (comme sur YouTube)
     if vibe.views is None: vibe.views = 0
     vibe.views += 1
     db.session.commit()
     
-    # --- LOGIQUE DE DÉFILEMENT (Navigation) ---
-    # On récupère les IDs pour savoir qui est avant et après
     all_vibes = Video.query.order_by(Video.created_at.desc()).all()
     vibe_ids = [v.id for v in all_vibes]
     current_index = vibe_ids.index(vibe.id)
@@ -425,10 +386,9 @@ def view_vibe(vibe_id):
     prev_id = vibe_ids[current_index - 1] if current_index > 0 else None
 
     return render_template('view_vibe.html', 
-                           vibe=vibe, 
-                           next_id=next_id, 
-                           prev_id=prev_id)
-
+                            vibe=vibe, 
+                            next_id=next_id, 
+                            prev_id=prev_id)
 
 @app.route('/accept_friend/<int:request_id>')
 def accept_friend(request_id):
@@ -476,7 +436,6 @@ def chat(friend_id):
     
     return render_template('chat.html', messages=messages, friend=friend)
 
-# --- NOUVEAU : LISTE DES DISCUSSIONS ET COMMUNAUTÉS ---
 @app.route('/messages')
 def messages_list():
     if 'user_id' not in session:
@@ -485,7 +444,6 @@ def messages_list():
     me_id = session['user_id']
     me = User.query.get(me_id)
     
-    # 1. Récupération des Amis (Privé)
     friends_relations = FriendRequest.query.filter(
         ((FriendRequest.sender_id == me_id) | (FriendRequest.receiver_id == me_id)),
         FriendRequest.status == 'accepted'
@@ -493,17 +451,12 @@ def messages_list():
     
     friends = []
     for rel in friends_relations:
-        friend_id = rel.receiver_id if rel.sender_id == me_id else rel.sender_id
-        friend_user = User.query.get(friend_id)
-        friends.append(friend_user)
+        f_id = rel.receiver_id if rel.sender_id == me_id else rel.sender_id
+        friends.append(User.query.get(f_id))
         
-    # 2. Récupération des Communautés (Groupes dont je suis membre)
     my_groups = me.groups.all()
-        
-    # On envoie les friends ET les groups au template HTML
     return render_template('messages_list.html', friends=friends, groups=my_groups)
 
-# --- NOUVEAU : CRÉER UN GROUPE (POUR TON BOUTON +) ---
 @app.route('/create_group', methods=['POST'])
 def create_group():
     if 'user_id' not in session:
@@ -513,7 +466,7 @@ def create_group():
     if group_name:
         me = User.query.get(session['user_id'])
         new_group = Group(name=group_name, creator_id=me.id)
-        new_group.members.append(me) # On ajoute le créateur comme premier membre
+        new_group.members.append(me)
         db.session.add(new_group)
         db.session.commit()
         flash("Communauté créée avec succès !", "success")
@@ -524,51 +477,27 @@ def create_group():
 def show_updates():
     updates = AppUpdate.query.order_by(AppUpdate.date.desc()).all()
     return render_template('updates.html', updates=updates)
-# On place la création des tables ICI, pour qu'elle s'exécute 
-# que ce soit via Python local ou via Gunicorn sur Render.
+
+# --- ROUTES DE MAINTENANCE DE LA BASE ---
 
 @app.route('/fix-db')
+@app.route('/migration-forcee')
+@app.route('/update-db-schema')
 def fix_db():
     try:
-        # Ajout des colonnes manquantes détectées dans vos logs
         db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS email VARCHAR(255);'))
         db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS bio TEXT;'))
         db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS phone VARCHAR(50);'))
         db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS google_id VARCHAR(100);'))
         db.session.commit()
-        return "Base de données mise à jour !"
-    except Exception as e:
-        return f"Erreur : {str(e)}"
-
-
-@app.route('/migration-forcee')
-def migration_forcee():
-    try:
-        # On ajoute toutes les colonnes qui manquent selon vos logs
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS email VARCHAR(255);'))
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS bio TEXT;'))
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS phone VARCHAR(50);'))
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS google_id VARCHAR(100);'))
-        db.session.commit()
-        return "Schéma mis à jour avec succès !"
+        return "Schéma de la base de données mis à jour avec succès !"
     except Exception as e:
         return f"Erreur lors de la mise à jour : {str(e)}"
 
-@app.route('/update-db-schema')
-def update_db_schema():
-    try:
-        # On ajoute les colonnes une par une
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS email VARCHAR(255);'))
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS bio TEXT;'))
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS phone VARCHAR(50);'))
-        db.session.commit()
-        return "Colonnes ajoutées avec succès !"
-    except Exception as e:
-        return f"Erreur : {str(e)}"
+# --- INITIALISATION AU LANCEMENT ---
 
 with app.app_context():
-    # ATTENTION : Cette ligne efface TOUTES les données existantes (utilisateurs, vidéos, commentaires)
-    # db.drop_all() 
+    # Crée les tables si elles n'existent pas
     db.create_all()
     print("VIBE AFRICA : Base de données prête et sécurisée.")
 
