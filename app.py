@@ -14,26 +14,32 @@ import cloudinary.uploader
 import cloudinary.api
 
 
+# 1. CRÉATION DE L'APPLICATION
+app = Flask(__name__)
+
+# 2. CONFIGURATION SÉCURISÉE DE LA CLE SECRETE
+app.secret_key = os.environ.get('SECRET_KEY', 'vybe_africa_secret_key_2026')
+
+# --- CONFIGURATION EMAIL ---
 app.config.update(
-    MAIL_SERVER='smpt.gmail.com',
+    MAIL_SERVER='smtp.gmail.com',
     MAIL_PORT=587,
     MAIL_USE_TLS=True,
-    MAIL_USERNAME='votre_email@gmail.com',
-    MAIL_PASSWORD='votre_mot_de_passe_d_application', # Ce n'est pas votre mot de passe habituel !
-    MAIL_DEFAULT_SENDER='votre_email@gmail.com'
-
+    MAIL_USERNAME=os.environ.get('MAIL_USER'),
+    MAIL_PASSWORD=os.environ.get('MAIL_PASS'),
+    MAIL_DEFAULT_SENDER=os.environ.get('MAIL_USER')
 )
 
 mail = Mail(app)
 
+# --- CONFIGURATION CLOUDINARY ---
 cloudinary.config(
     cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
     api_key=os.environ.get('CLOUDINARY_API_KEY'),
     api_secret=os.environ.get('CLOUDINARY_API_SECRET')
 )
 
-app = Flask(__name__)
-
+# --- CONFIGURATION DE LIMITEUR (RATE LIMITER) ---
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
@@ -41,11 +47,8 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# --- CONFIGURATION SÉCURISÉE ---
-# On utilise une clé secrète dynamique pour plus de sécurité
-app.secret_key = os.environ.get('SECRET_KEY', 'vybe_africa_secret_key_2026')
 
-# Configuration de l'upload
+# --- CONFIGURATION DE L'UPLOAD ---
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -53,26 +56,23 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- CONFIGURATION DE LA BASE DE DONNÉES (STRICTE) ---
+# --- CONFIGURATION DE LA BASE DE DONNÉES ---
 database_url = os.environ.get('DATABASE_URL')
 
 if not database_url:
-    # Si on est en local sur ton PC, on peut garder SQLite pour tester
-    # Mais sur Render, on veut que ça s'arrête si DATABASE_URL manque
     if os.environ.get('RENDER'):
         raise RuntimeError("❌ DATABASE_URL manquante sur Render. Vérifie l'onglet Environment !")
     else:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vibe_africa.db'
 else:
-    # Correction automatique du préfixe pour Render/Heroku
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
-#  INITIALISATION DES OUTILS DE SECURITE
+# 3. INITIALISATION DES EXTENSIONS DB ET SECURITE
+db = SQLAlchemy(app)
 s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 # ---------------------------------------------------------

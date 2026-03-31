@@ -149,16 +149,17 @@
             <span class="vibe-title"><strong>{{ video.title }}</strong></span>
             
             <div class="vibe-actions">
-                <div class="action-link view-count-box">
-                    👁️ <span id="view-count-{{ video.id }}">{{ video.views or 0 }}</span>
-                </div>
-
+                
                 <a href="{{ url_for('like_video', video_id=video.id) }}" class="action-link" style="color: #ff4b2b;">
                     ❤️ {{ video.likes|length }}
                 </a>
 
                 <div class="action-link" onclick="toggleComments('{{ video.id }}')">
                     💬 <span style="font-size: 14px;">{{ video.comments|length }}</span>
+                </div>
+
+                <div class="action-link view-count-box">
+                    👁️ <span id="view-count-{{ video.id }}">{{ video.views or 0 }}</span>
                 </div>
 
                 <div class="action-link" onclick="copyLink('{{ video.id }}')">
