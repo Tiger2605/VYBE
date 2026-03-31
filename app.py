@@ -3,10 +3,13 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from datetime import datetime
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+
 
 cloudinary.config(
     cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -15,6 +18,14 @@ cloudinary.config(
 )
 
 app = Flask(__name__)
+
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 # --- CONFIGURATION SÉCURISÉE ---
 # On utilise une clé secrète dynamique pour plus de sécurité
@@ -149,6 +160,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
+@limiter.limit("3 per hour") # Empeche quelqu'un de creer 1000 faux comptes d'un coup
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -175,6 +187,7 @@ def register():
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute") # limiter les tentives de connexion pour elever la securite
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -192,6 +205,10 @@ def login():
             return redirect(url_for('login'))
             
     return render_template('login.html')
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return "🚀 Oups ! Tu vas trop vite pour VIBE. Respire un peu et réessaie dans une minute.", 429
 
 @app.route('/dashboard')
 def dashboard():
