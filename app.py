@@ -537,6 +537,20 @@ def fix_db():
     except Exception as e:
         return f"Erreur : {str(e)}"
 
+
+@app.route('/migration-forcee')
+def migration_forcee():
+    try:
+        # On ajoute toutes les colonnes qui manquent selon vos logs
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS email VARCHAR(255);'))
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS bio TEXT;'))
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS phone VARCHAR(50);'))
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS google_id VARCHAR(100);'))
+        db.session.commit()
+        return "Schéma mis à jour avec succès !"
+    except Exception as e:
+        return f"Erreur lors de la mise à jour : {str(e)}"
+
 @app.route('/update-db-schema')
 def update_db_schema():
     try:
