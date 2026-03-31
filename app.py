@@ -524,6 +524,19 @@ def show_updates():
 # On place la création des tables ICI, pour qu'elle s'exécute 
 # que ce soit via Python local ou via Gunicorn sur Render.
 
+@app.route('/fix-db')
+def fix_db():
+    try:
+        # Ajout des colonnes manquantes détectées dans vos logs
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS email VARCHAR(255);'))
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS bio TEXT;'))
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS phone VARCHAR(50);'))
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS google_id VARCHAR(100);'))
+        db.session.commit()
+        return "Base de données mise à jour !"
+    except Exception as e:
+        return f"Erreur : {str(e)}"
+
 @app.route('/update-db-schema')
 def update_db_schema():
     try:
