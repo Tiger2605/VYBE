@@ -1,5 +1,6 @@
 import re
 import os
+from sqlalchemy import text
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
@@ -522,6 +523,18 @@ def show_updates():
     return render_template('updates.html', updates=updates)
 # On place la création des tables ICI, pour qu'elle s'exécute 
 # que ce soit via Python local ou via Gunicorn sur Render.
+
+@app.route('/update-db-schema')
+def update_db_schema():
+    try:
+        # On ajoute les colonnes une par une
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS email VARCHAR(255);'))
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS bio TEXT;'))
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS phone VARCHAR(50);'))
+        db.session.commit()
+        return "Colonnes ajoutées avec succès !"
+    except Exception as e:
+        return f"Erreur : {str(e)}"
 
 with app.app_context():
     # ATTENTION : Cette ligne efface TOUTES les données existantes (utilisateurs, vidéos, commentaires)
