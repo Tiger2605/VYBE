@@ -1,6 +1,7 @@
 import re
 import os
 from sqlalchemy import text
+from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
@@ -18,7 +19,9 @@ import cloudinary.api
 app = Flask(__name__)
 
 # 2. CONFIGURATION SÉCURISÉE DE LA CLE SECRETE
+
 app.secret_key = os.environ.get('SECRET_KEY', 'vybe_africa_secret_key_2026')
+db.init_app(app)
 
 # --- CONFIGURATION EMAIL ---
 app.config.update(
