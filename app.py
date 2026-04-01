@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from models import db, User, Group, GroupMessage, Like, Comment, FriendRequest, Video, Message, AppUpdate
+from models import db, User, Group, GroupMessage, Like, Comment, FriendRequest, Video,Favorite, Message, AppUpdate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from itsdangerous import URLSafeTimedSerializer
@@ -75,6 +75,11 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Dossier spécifique pour les photos de profil
+UPLOAD_FOLDER_PROFILES = os.path.join(app.config['UPLOAD_FOLDER'], 'profiles')
+if not os.path.exists(UPLOAD_FOLDER_PROFILES):
+    os.makedirs(UPLOAD_FOLDER_PROFILES)
 
 # --- ROUTES ---
 
@@ -248,15 +253,29 @@ def logout():
 @app.route('/profile/')
 @app.route('/profile/<username>')
 def profile(username=None):
+    # 1. Gestion des accès (Visiteur vs Connecté)
     if username is None and 'user_id' not in session:
         return render_template('profile_guest.html')
 
     if username is None and 'user_id' in session:
         username = session['username']
     
+    # 2. Récupération de l'utilisateur ciblé
     user = User.query.filter_by(username=username).first_or_404()
+    
+    # 3. Récupération des données pour les onglets (Vibes, Likes, Favoris)
+    # Mes publications
     vibes = Video.query.filter_by(user_id=user.id).order_by(Video.created_at.desc()).all()
     
+    # Vidéos que j'ai likées (On cherche dans la table Like)
+    liked_ids = [l.video_id for l in Like.query.filter_by(user_id=user.id).all()]
+    liked_videos = Video.query.filter(Video.id.in_(liked_ids)).all() if liked_ids else []
+    
+    # Vidéos en favoris (On cherche dans la table Favorite)
+    fav_ids = [f.video_id for f in Favorite.query.filter_by(user_id=user.id).all()]
+    fav_videos = Video.query.filter(Video.id.in_(fav_ids)).all() if fav_ids else []
+    
+    # 4. Statistiques et Relations
     friends_count = FriendRequest.query.filter(
         ((FriendRequest.sender_id == user.id) | (FriendRequest.receiver_id == user.id)),
         (FriendRequest.status == 'accepted')
@@ -271,6 +290,7 @@ def profile(username=None):
         if me.id == user.id:
             is_own_profile = True
         
+        # Vérification si nous sommes déjà amis
         friendship = FriendRequest.query.filter(
             ((FriendRequest.sender_id == me.id) & (FriendRequest.receiver_id == user.id)) |
             ((FriendRequest.sender_id == user.id) & (FriendRequest.receiver_id == me.id)),
@@ -282,8 +302,77 @@ def profile(username=None):
                            current_user_obj=me, 
                            friendship=friendship, 
                            vibes=vibes, 
+                           liked_videos=liked_videos, # Nouveau
+                           fav_videos=fav_videos,     # Nouveau
                            is_own_profile=is_own_profile,
                            friends_count=friends_count)
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    
+    if request.method == 'POST':
+        user.username = request.form.get('username')
+        user.bio = request.form.get('bio')
+        user.phone = request.form.get('phone')
+        
+        file = request.files.get('profile_pic')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(f"profile_{user.id}_{file.filename}")
+            file.save(os.path.join(UPLOAD_FOLDER_PROFILES, filename))
+            user.profile_pic = filename
+            
+        db.session.commit()
+        flash("Ton profil a été mis à jour, @{} !".format(user.username))
+        return redirect(url_for('profile', username=user.username))
+        
+    return render_template('edit_profile.html', user=user)
+
+# --- ROUTE : LISTE DES AMIS ---
+@app.route('/profile/<username>/friends')
+def friends_list(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    # On cherche tous les amis acceptés
+    requests = FriendRequest.query.filter(
+        ((FriendRequest.sender_id == user.id) | (FriendRequest.receiver_id == user.id)),
+        (FriendRequest.status == 'accepted')
+    ).all()
+    
+    friends = []
+    for req in requests:
+        friend_id = req.receiver_id if req.sender_id == user.id else req.sender_id
+        friends.append(User.query.get(friend_id))
+        
+    return render_template('users_list.html', title="Amis de " + username, users=friends)
+
+# --- ROUTE : LISTE DES ABONNÉS ---
+@app.route('/profile/<username>/followers')
+def followers_list(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    return render_template('users_list.html', title="Abonnés de " + username, users=user.followers.all())
+
+# --- ROUTE : FAVORIS (Toggle) ---
+@app.route('/toggle_favorite/<int:video_id>', methods=['POST'])
+def toggle_favorite(video_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    existing = Favorite.query.filter_by(user_id=user_id, video_id=video_id).first()
+    
+    if existing:
+        db.session.delete(existing)
+        flash("Retiré des favoris")
+    else:
+        new_fav = Favorite(user_id=user_id, video_id=video_id)
+        db.session.add(new_fav)
+        flash("Ajouté aux favoris ⭐")
+        
+    db.session.commit()
+    return redirect(request.referrer or url_for('dashboard'))
 
 @app.route('/follow/<username>')
 def follow(username):

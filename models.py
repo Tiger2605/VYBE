@@ -26,6 +26,7 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     bio = db.Column(db.String(200), default="Salut, je suis sur VIBE AFRICA !")
+    profile_pic = db.Column(db.String(255), default='default_profile.png') # AJOUT : Photo de profil
     google_id = db.Column(db.String(100), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True)
 
@@ -36,6 +37,9 @@ class User(db.Model):
         secondaryjoin=(followers.c.followed_id == id),
         backref=db.backref('followers', lazy='dynamic'), lazy='dynamic'
     )
+    
+    # AJOUT : Relation pour les favoris
+    favorites = db.relationship('Favorite', backref='user', lazy='dynamic')
 
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -50,13 +54,20 @@ class GroupMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    content = db.Column(db.Text, nullable=False)
+    content = db.Text(nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'))
+
+# AJOUT : Modèle pour enregistrer les vidéos en favoris
+class Favorite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -79,6 +90,7 @@ class Video(db.Model):
     category = db.Column(db.String(50), nullable=False, default='Autres')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     likes = db.relationship('Like', backref='video', lazy=True)
+    favs = db.relationship('Favorite', backref='video', lazy=True) # AJOUT : Lien Video -> Favoris
     views = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+    .list-container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 10px;
+    }
+    .user-item {
+        display: flex;
+        align-items: center;
+        background: #222;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 15px;
+        text-decoration: none;
+        color: white;
+        transition: 0.2s;
+        border: 1px solid #333;
+    }
+    .user-item:hover { background: #2a2a2a; border-color: #444; }
+    
+    .user-avatar {
+        width: 50px; height: 50px; border-radius: 50%;
+        background: #ff4b2b; display: flex; align-items: center;
+        justify-content: center; font-weight: bold; margin-right: 15px;
+        overflow: hidden;
+    }
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .user-info h3 { margin: 0; font-size: 16px; }
+    .user-info p { margin: 0; font-size: 12px; color: #888; }
+</style>
+
+<div class="list-container">
+    <h2 style="margin-bottom: 20px;">{{ title }}</h2>
+
+    {% for u in users %}
+        <a href="{{ url_for('profile', username=u.username) }}" class="user-item">
+            <div class="user-avatar">
+                {% if u.profile_pic and u.profile_pic != 'default_profile.png' %}
+                    <img src="{{ url_for('static', filename='uploads/profiles/' + u.profile_pic) }}">
+                {% else %}
+                    {{ u.username[0] | upper }}
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <h3>@{{ u.username }}</h3>
+                <p>{{ u.bio[:50] }}...</p>
+            </div>
+            <div style="margin-left: auto; color: #ff4b2b;">
+                Voir →
+            </div>
+        </a>
+    {% else %}
+        <div style="text-align: center; color: #666; padding: 50px;">
+            <p>Aucun utilisateur trouvé ici.</p>
+        </div>
+    {% endfor %}
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="javascript:history.back()" style="color: #888; text-decoration: none;">← Retour</a>
+    </div>
+</div>
+{% endblock %}
