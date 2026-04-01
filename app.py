@@ -82,6 +82,18 @@ def allowed_file(filename):
 def index():
     return render_template('index.html')
 
+@app.route('/reset-total-db')
+def reset_total_db():
+    try:
+        # 1. On supprime TOUTES les tables existantes
+        db.drop_all()
+        # 2. On recrée TOUTES les tables avec le nouveau schéma (incluant email, bio, etc.)
+        db.create_all()
+        return "🔥 Base de données réinitialisée avec succès ! Tout est propre."
+    except Exception as e:
+        return f"Erreur lors du reset : {str(e)}"
+
+
 @app.route('/register', methods=['GET', 'POST'])
 @limiter.limit("3 per hour") 
 def register():
