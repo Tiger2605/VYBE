@@ -95,32 +95,46 @@ def reset_total_db():
 
 
 @app.route('/register', methods=['GET', 'POST'])
-#@limiter.limit("5 per hour") 
 def register():
     if request.method == 'POST':
+        # 1. On récupère TOUTES les données du formulaire
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
+        email = request.form.get('email', '').strip()  # <--- AJOUTÉ
         phone = request.form.get('phone', '').strip()
+        bio = request.form.get('bio', '').strip()      # <--- AJOUTÉ
         
-        if not username or not password or not phone:
-            flash("Erreur : Tous les champs doivent être remplis.", "error")
+        # 2. On vérifie que les champs obligatoires sont là
+        if not username or not password or not phone or not email:
+            flash("Erreur : Tous les champs (incluant l'email) doivent être remplis.", "error")
             return redirect(url_for('register'))
 
+        # Validations RegEx (Username et Téléphone)
         if not re.match(r"^[a-zA-Z0-9_]{3,20}$", username):
-            flash("Le nom d'utilisateur doit contenir entre 3 et 20 caractères (lettres, chiffres ou _).", "error")
+            flash("Nom d'utilisateur invalide.", "error")
             return redirect(url_for('register'))
 
         if not re.match(r"^0[89][0-9]{8}$", phone):
-            flash("Format de numéro invalide. Utilisez 08... ou 09... (10 chiffres).", "error")
+            flash("Format de numéro invalide (10 chiffres commençant par 08 ou 09).", "error")
             return redirect(url_for('register'))
 
-        user_exists = User.query.filter_by(username=username).first()
+        # 3. Vérifier si l'utilisateur existe déjà
+        user_exists = User.query.filter((User.username == username) | (User.email == email)).first()
         if user_exists:
-            flash("Ce nom d'utilisateur est déjà utilisé.", "error")
+            flash("Le nom d'utilisateur ou l'email est déjà utilisé.", "error")
             return redirect(url_for('register'))
 
+        # 4. Hachage et création de l'utilisateur
         hashed_pw = generate_password_hash(password)
-        new_user = User(username=username, password=hashed_pw, phone=phone)
+        
+        # IMPORTANT : On inclut email=email et bio=bio ici !
+        new_user = User(
+            username=username, 
+            password=hashed_pw, 
+            email=email, 
+            phone=phone, 
+            bio=bio if bio else "Salut, je suis sur VIBE AFRICA !"
+        )
         
         try:
             db.session.add(new_user)
@@ -130,7 +144,7 @@ def register():
         except Exception as e:
             db.session.rollback()
             print(f"Erreur d'insertion : {e}")
-            flash("Une erreur interne est survenue. Réessayez plus tard.", "error")
+            flash("Une erreur interne est survenue.", "error")
             return redirect(url_for('register'))
     
     return render_template('register.html')
