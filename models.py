@@ -54,7 +54,8 @@ class GroupMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    content = db.Text(nullable=False)
+    # CORRECTION ICI : nullable=False doit être dans db.Column
+    content = db.Column(db.Text, nullable=False) 
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Like(db.Model):
