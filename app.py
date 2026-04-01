@@ -95,7 +95,7 @@ def reset_total_db():
 
 
 @app.route('/register', methods=['GET', 'POST'])
-@limiter.limit("5 per hour") 
+#@limiter.limit("5 per hour") 
 def register():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
