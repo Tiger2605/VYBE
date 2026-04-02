@@ -374,6 +374,17 @@ def toggle_favorite(video_id):
     db.session.commit()
     return redirect(request.referrer or url_for('dashboard'))
 
+@app.route('/reset-db-total')
+def reset_db_total():
+    try:
+        # Supprime tout
+        db.drop_all()
+        # Recrée tout selon tes modèles actuels
+        db.create_all()
+        return "🔥 Base de données réinitialisée ! Tu peux recréer un compte."
+    except Exception as e:
+        return f"❌ Erreur : {str(e)}"
+
 @app.route('/follow/<username>')
 def follow(username):
     if 'user_id' not in session:
