@@ -540,7 +540,7 @@ def chat(friend_id):
     if request.method == 'POST':
         content = request.form.get('content')
         if content:
-            new_msg = Message(sender_id=me_id, receiver_id=friend_id, content=content)
+            new_msg = MessageModel(sender_id=me_id, receiver_id=friend_id, content=content)
             db.session.add(new_msg)
             db.session.commit()
             return redirect(url_for('chat', friend_id=friend_id))
