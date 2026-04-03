@@ -87,17 +87,6 @@ if not os.path.exists(UPLOAD_FOLDER_PROFILES):
 def index():
     return render_template('index.html')
 
-@app.route('/reset-total-db')
-def reset_total_db():
-    try:
-        # 1. On supprime TOUTES les tables existantes
-        db.drop_all()
-        # 2. On recrée TOUTES les tables avec le nouveau schéma (incluant email, bio, etc.)
-        db.create_all()
-        return "🔥 Base de données réinitialisée avec succès ! Tout est propre."
-    except Exception as e:
-        return f"Erreur lors du reset : {str(e)}"
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -596,19 +585,6 @@ def show_updates():
 
 # --- ROUTES DE MAINTENANCE DE LA BASE ---
 
-@app.route('/fix-db')
-@app.route('/migration-forcee')
-@app.route('/update-db-schema')
-def fix_db():
-    try:
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS email VARCHAR(255);'))
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS bio TEXT;'))
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS phone VARCHAR(50);'))
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN IF NOT EXISTS google_id VARCHAR(100);'))
-        db.session.commit()
-        return "Schéma de la base de données mis à jour avec succès !"
-    except Exception as e:
-        return f"Erreur lors de la mise à jour : {str(e)}"
 
 # --- INITIALISATION AU LANCEMENT ---
 
