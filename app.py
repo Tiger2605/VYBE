@@ -5,11 +5,11 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from models import db, User, Group, GroupMessage, Like, Comment, FriendRequest, Video,Favorite, Message, AppUpdate
+from models import db, User, Group, GroupMessage, Like, Comment, FriendRequest, Video,Favorite, Message as MessageModel, AppUpdate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from itsdangerous import URLSafeTimedSerializer
-from flask_mail import Mail, Message 
+from flask_mail import Mail, Message as MailMessage
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -374,16 +374,6 @@ def toggle_favorite(video_id):
     db.session.commit()
     return redirect(request.referrer or url_for('dashboard'))
 
-@app.route('/reset-db-total')
-def reset_db_total():
-    try:
-        # Supprime tout
-        db.drop_all()
-        # Recrée tout selon tes modèles actuels
-        db.create_all()
-        return "🔥 Base de données réinitialisée ! Tu peux recréer un compte."
-    except Exception as e:
-        return f"❌ Erreur : {str(e)}"
 
 @app.route('/follow/<username>')
 def follow(username):
@@ -555,10 +545,10 @@ def chat(friend_id):
             db.session.commit()
             return redirect(url_for('chat', friend_id=friend_id))
 
-    messages = Message.query.filter(
-        ((Message.sender_id == me_id) & (Message.receiver_id == friend_id)) |
-        ((Message.sender_id == friend_id) & (Message.receiver_id == me_id))
-    ).order_by(Message.timestamp.asc()).all()
+    messages = MessageModel.query.filter(
+        ((MessageModel.sender_id == me_id) & (MessageModel.receiver_id == friend_id)) |
+        ((MessageModel.sender_id == friend_id) & (MessageModel.receiver_id == me_id))
+    ).order_by(MessageModel.timestamp.asc()).all()
     
     return render_template('chat.html', messages=messages, friend=friend)
 
