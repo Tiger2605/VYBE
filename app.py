@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from models import db, User, Group, GroupMessage, Like, Comment, FriendRequest, Video,Favorite, Message as MessageModel, AppUpdate
+from models import Business, db, User, Group, GroupMessage, Like, Comment, FriendRequest, Video,Favorite, Message as MessageModel, AppUpdate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from itsdangerous import URLSafeTimedSerializer
@@ -632,6 +632,24 @@ def create_business():
         
     return render_template('create_business.html')
 
+@app.route('/contact_business/<int:biz_id>')
+def contact_business(biz_id):
+    if 'user_id' not in session:
+        flash("Connectez-vous pour contacter ce business", "info")
+        return redirect(url_for('login'))
+    
+    # Trouver le business et son propriétaire
+    biz = Business.query.get_or_404(biz_id)
+    
+    # Empêcher l'utilisateur de se contacter lui-même
+    if biz.owner_id == session['user_id']:
+        flash("C'est votre propre business !", "info")
+        return redirect(url_for('explorer'))
+
+    # Rediriger vers la route de chat existante avec l'ID du propriétaire
+    # L'utilisateur pourra alors envoyer un message via le système MessageModel
+    return redirect(url_for('chat', friend_id=biz.owner_id))
+
 @app.route('/explorer/<category>')
 def explorer_category(category):
     # On récupère tous les business créés par les utilisateurs pour cette catégorie
@@ -639,7 +657,11 @@ def explorer_category(category):
     return render_template('explorer_detail.html', category=category, businesses=businesses)
 
 # --- ROUTES DE MAINTENANCE DE LA BASE ---
-
+# À SUPPRIMER COMPLÈTEMENT
+@app.route('/fix-db-complete')
+def fix_db_complete():
+    # ... tout le code de création des tables ...
+    return "Base de données mise à jour !"
 
 # --- INITIALISATION AU LANCEMENT ---
 

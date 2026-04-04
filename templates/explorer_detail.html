@@ -5,15 +5,45 @@
     <h3 style="text-transform: uppercase; margin-top: 15px;">{{ category }}</h3>
 </div>
 
-<div class="sub-grid" style="display: grid; gap: 10px;">
-    {% for item in items %}
-    <a href="{{ item.link }}" style="background:#111; padding:15px; border-radius:10px; text-decoration:none; display:flex; align-items:center; border:1px solid #222;">
-        <span style="font-size:24px; margin-right:15px;">{{ item.icon }}</span>
-        <span style="color:white; font-weight:bold;">{{ item.name }}</span>
-        <span style="margin-left:auto; color:#444;">❯</span>
-    </a>
+<div class="sub-grid" style="display: grid; gap: 15px;">
+    {% for biz in businesses %}
+    {# On utilise 'biz' comme variable de boucle pour correspondre à vos noms de champs #}
+    <div style="background:#111; padding:15px; border-radius:12px; border:1px solid #222; transition: 0.3s;">
+        <div style="display:flex; align-items:center;">
+            {# Icône ou image du business #}
+            <span style="font-size:30px; margin-right:15px;">
+                {% if biz.image_url and biz.image_url != 'default_biz.png' %}
+                    <img src="{{ biz.image_url }}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">
+                {% else %}
+                    🏢
+                {% endif %}
+            </span>
+            
+            <div style="flex:1;">
+                <h4 style="margin:0; color:white; font-size:16px;">{{ biz.name }}</h4>
+                <p style="margin:3px 0; font-size:12px; color:#888;">{{ biz.description[:70] }}...</p>
+            </div>
+        </div>
+        
+        {# Actions du Business #}
+        <div style="margin-top:15px; display:flex; gap:10px;">
+            <a href="{{ url_for('contact_business', biz_id=biz.id) }}" 
+               style="flex:1; background:#ff4b2b; color:white; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-size:13px; font-weight:bold;">
+                💬 Contacter
+            </a>
+            <a href="#" style="flex:1; background:#222; color:white; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-size:13px;">
+                ℹ️ Détails
+            </a>
+        </div>
+    </div>
     {% else %}
-    <p style="color:#666; text-align:center;">Bientôt disponible...</p>
+    {# Si aucun business n'est encore créé dans cette catégorie #}
+    <div style="text-align:center; padding:40px 20px;">
+        <p style="color:#666;">Aucun business "<strong>{{ category }}</strong>" pour le moment.</p>
+        <a href="{{ url_for('create_business') }}" style="color:#ff4b2b; text-decoration:none; font-weight:bold;">
+            Soyez le premier à en créer un !
+        </a>
+    </div>
     {% endfor %}
 </div>
 {% endblock %}
