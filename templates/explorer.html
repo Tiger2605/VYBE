@@ -1,74 +1,60 @@
 {% extends "base.html" %}
-
-{% block title %}Explorer - VYBE{% endblock %}
-
 {% block content %}
 <style>
-    .search-box {
-        background: #1a1a1a;
-        border: 1px solid #333;
-        border-radius: 25px;
-        padding: 12px 20px;
-        width: 100%;
-        color: white;
-        margin-bottom: 25px;
-        outline: none;
-    }
-    .explorer-grid {
+    .business-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 20px;
     }
-    .explore-card {
-        background: linear-gradient(45deg, #1a1a1a, #222);
-        border: 1px solid #333;
-        border-radius: 15px;
-        padding: 25px 15px;
+    .biz-card {
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 12px;
+        padding: 20px 10px;
         text-align: center;
         text-decoration: none;
-        color: white;
         transition: 0.3s;
     }
-    .explore-card:active { transform: scale(0.95); }
-    .explore-card i { font-size: 24px; display: block; margin-bottom: 10px; }
-    .card-title { font-weight: bold; font-size: 14px; }
-    .trending-section { margin-top: 30px; }
-    .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #ff4b2b; }
+    .biz-card:hover { border-color: #ff4b2b; background: #1a1a1a; }
+    .biz-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+    .biz-name { color: #eee; font-size: 13px; font-weight: 600; }
+    .special-add { background: #ff4b2b !important; border: none; }
 </style>
 
-<div class="explorer-container">
-    <input type="text" class="search-box" placeholder="Rechercher un utilisateur ou un vibe...">
+<div class="explorer-header" style="text-align:center; margin-bottom:20px;">
+    <h2 style="color:#ff4b2b;">BUSINESS HUB</h2>
+    <p style="font-size:12px; color:#888;">Propulsez vos activités sur VYBE</p>
+</div>
 
-    <div class="explorer-grid">
-        <a href="#" class="explore-card">
-            <span>🔥</span>
-            <div class="card-title">Tendances</div>
-        </a>
-        <a href="#" class="explore-card">
-            <span>👥</span>
-            <div class="card-title">Nouveaux amis</div>
-        </a>
-        <a href="#" class="explore-card">
-            <span>🎬</span>
-            <div class="card-title">Vidéos</div>
-        </a>
-        <a href="#" class="explore-card">
-            <span>🎵</span>
-            <div class="card-title">Musique</div>
-        </a>
-        <a href="#" class="explore-card">
-            <span>💻</span>
-            <div class="card-title">Tech & Dev</div>
-        </a>
-        <a href="#" class="explore-card">
-            <span>🌍</span>
-            <div class="card-title">Afrique</div>
-        </a>
-    </div>
-
-    <div class="trending-section">
-        <div class="section-title">Populaire en ce moment</div>
-        <p style="color: #666; font-size: 14px; text-align: center;">Bientôt : les hashtags les plus utilisés s'afficheront ici.</p>
-    </div>
+<div class="business-grid">
+    <a href="{{ url_for('explorer_category', category='boutique') }}" class="biz-card">
+        <span class="biz-icon">🛍️</span>
+        <span class="biz-name">Boutique / Shop</span>
+    </a>
+    <a href="{{ url_for('explorer_category', category='divertissement') }}" class="biz-card">
+        <span class="biz-icon">🎭</span>
+        <span class="biz-name">Divertissement</span>
+    </a>
+    <a href="{{ url_for('explorer_category', category='news') }}" class="biz-card">
+        <span class="biz-icon">📰</span>
+        <span class="biz-name">New / Info</span>
+    </a>
+    <a href="{{ url_for('explorer_category', category='ecole') }}" class="biz-card">
+        <span class="biz-icon">🎓</span>
+        <span class="biz-name">École / Formation</span>
+    </a>
+    <a href="{{ url_for('explorer_category', category='emploi') }}" class="biz-card">
+        <span class="biz-icon">💼</span>
+        <span class="biz-name">Offre d'emploi</span>
+    </a>
+    <a href="{{ url_for('explorer_category', category='restaurant') }}" class="biz-card">
+        <span class="biz-icon">🍴</span>
+        <span class="biz-name">Restaurant</span>
+    </a>
+    <a href="#" class="biz-card special-add" style="grid-column: span 2;">
+        <span class="biz-icon">➕</span>
+        <span class="biz-name" style="color:white;">Créer ou Add+</span>
+    </a>
 </div>
 {% endblock %}
