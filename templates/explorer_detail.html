@@ -1,49 +1,103 @@
 {% extends "base.html" %}
 {% block content %}
+
+<style>
+    /* Styles pour les badges de confiance */
+    .badge-container { 
+        display: flex; 
+        gap: 6px; 
+        margin-top: 5px; 
+    }
+    .badge-mini {
+        font-size: 9px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .badge-certified { 
+        background: rgba(0, 123, 255, 0.15); 
+        color: #007bff; 
+        border: 1px solid rgba(0, 123, 255, 0.5); 
+    }
+    .badge-secured { 
+        background: rgba(46, 204, 113, 0.15); 
+        color: #2ecc71; 
+        border: 1px solid rgba(46, 204, 113, 0.5); 
+    }
+    .verified-icon {
+        color: #007bff;
+        font-size: 14px;
+        margin-left: 5px;
+    }
+</style>
+
 <div style="margin-bottom: 20px;">
-    <a href="{{ url_for('explorer') }}" style="color: #ff4b2b; text-decoration: none;">← Retour</a>
-    <h3 style="text-transform: uppercase; margin-top: 15px;">{{ category }}</h3>
+    <a href="{{ url_for('explorer') }}" style="color: #ff4b2b; text-decoration: none; font-size: 14px;">← Retour</a>
+    <h3 style="text-transform: uppercase; margin-top: 15px; letter-spacing: 1px;">{{ category }}</h3>
 </div>
 
 <div class="sub-grid" style="display: grid; gap: 15px;">
     {% for biz in businesses %}
-    {# On utilise 'biz' comme variable de boucle pour correspondre à vos noms de champs #}
-    <div style="background:#111; padding:15px; border-radius:12px; border:1px solid #222; transition: 0.3s;">
-        <div style="display:flex; align-items:center;">
-            {# Icône ou image du business #}
-            <span style="font-size:30px; margin-right:15px;">
+    <div style="background:#111; padding:15px; border-radius:12px; border:1px solid #222; transition: 0.3s; position: relative;">
+        
+        <div style="display:flex; align-items:flex-start;">
+            {# Image ou Icône du business #}
+            <div style="margin-right:15px;">
                 {% if biz.image_url and biz.image_url != 'default_biz.png' %}
-                    <img src="{{ biz.image_url }}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">
+                    <img src="{{ biz.image_url }}" style="width:45px; height:45px; border-radius:10px; object-fit:cover; border: 1px solid #333;">
                 {% else %}
-                    🏢
+                    <div style="width:45px; height:45px; background:#1a1a1a; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px; border: 1px solid #333;">
+                        🏢
+                    </div>
                 {% endif %}
-            </span>
+            </div>
             
             <div style="flex:1;">
-                <h4 style="margin:0; color:white; font-size:16px;">{{ biz.name }}</h4>
-                <p style="margin:3px 0; font-size:12px; color:#888;">{{ biz.description[:70] }}...</p>
+                {# Nom + Icone de certification #}
+                <div style="display:flex; align-items:center;">
+                    <h4 style="margin:0; color:white; font-size:16px; font-weight:700;">{{ biz.name }}</h4>
+                    {% if biz.is_certified %}
+                        <span class="verified-icon" title="Certifié par VYBE">✔</span>
+                    {% endif %}
+                </div>
+                
+                {# Badges textuels #}
+                <div class="badge-container">
+                    {% if biz.is_certified %}
+                        <span class="badge-mini badge-certified">Certifié</span>
+                    {% endif %}
+                    {% if biz.is_secured %}
+                        <span class="badge-mini badge-secured">Sécurisé</span>
+                    {% endif %}
+                </div>
+
+                <p style="margin:10px 0 0 0; font-size:12px; color:#aaa; line-height:1.4;">
+                    {{ biz.description[:85] }}{% if biz.description|length > 85 %}...{% endif %}
+                </p>
             </div>
         </div>
         
         {# Actions du Business #}
-        <div style="margin-top:15px; display:flex; gap:10px;">
+        <div style="margin-top:18px; display:flex; gap:10px;">
             <a href="{{ url_for('contact_business', biz_id=biz.id) }}" 
-               style="flex:1; background:#ff4b2b; color:white; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-size:13px; font-weight:bold;">
+               style="flex:1; background:#ff4b2b; color:white; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-size:13px; font-weight:bold; box-shadow: 0 4px 10px rgba(255, 75, 43, 0.2);">
                 💬 Contacter
             </a>
-            <a href="#" style="flex:1; background:#222; color:white; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-size:13px;">
+            <a href="#" style="flex:1; background:#1a1a1a; color:#eee; text-align:center; padding:10px; border-radius:8px; text-decoration:none; font-size:13px; border: 1px solid #333;">
                 ℹ️ Détails
             </a>
         </div>
     </div>
     {% else %}
-    {# Si aucun business n'est encore créé dans cette catégorie #}
-    <div style="text-align:center; padding:40px 20px;">
-        <p style="color:#666;">Aucun business "<strong>{{ category }}</strong>" pour le moment.</p>
-        <a href="{{ url_for('create_business') }}" style="color:#ff4b2b; text-decoration:none; font-weight:bold;">
-            Soyez le premier à en créer un !
+    <div style="text-align:center; padding:60px 20px; background: #080808; border-radius: 15px; border: 1px dashed #333;">
+        <p style="color:#666; margin-bottom: 15px;">Aucun business "<strong>{{ category }}</strong>" pour le moment.</p>
+        <a href="{{ url_for('create_business') }}" style="color:#ff4b2b; text-decoration:none; font-weight:bold; font-size: 14px;">
+            🚀 Soyez le premier à lancer votre activité !
         </a>
     </div>
     {% endfor %}
 </div>
+
 {% endblock %}

@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+from sqlalchemy import Boolean
+
 # 1. On initialise l'objet db, MAIS sans l'attacher à l'application tout de suite.
 db = SQLAlchemy()
 
@@ -119,3 +121,6 @@ class Business(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     owner = db.relationship('User', backref=db.backref('businesses', lazy=True))
+
+    is_certified = db.Column(db.Column(Boolean, default=False))
+    is_secured = db.Column(db.Column(Boolean, default=True)) # Par defaut securise si sur ta plateforme
