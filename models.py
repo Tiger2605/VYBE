@@ -122,5 +122,6 @@ class Business(db.Model):
     
     owner = db.relationship('User', backref=db.backref('businesses', lazy=True))
 
-    is_certified = db.Column(Boolean, default=False)
-    is_secured = db.Column(Boolean, default=True) # Par defaut securise si sur ta plateforme
+    # CORRECTION ICI : Ajout de db. devant Boolean
+    is_certified = db.Column(db.Boolean, default=False)
+    is_secured = db.Column(db.Boolean, default=True)
