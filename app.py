@@ -243,27 +243,27 @@ def explorer():
     # Page principale avec les grands groupes (Boutique, École, etc.)
     return render_template('explorer.html')
 
-@app.route('/explorer/<category>')
-def explorer_category(category):
+#@app.route('/explorer/<category>')
+#def explorer_category(category):
     # Dictionnaire des sous-activités
-    sub_categories = {
-        'divertissement': [
-            {'name': 'Vidéos', 'icon': '🎬', 'link': '#'},
-            {'name': 'Séries', 'icon': '📺', 'link': '#'},
-            {'name': 'Musique', 'icon': '🎵', 'link': '#'}
-        ],
-        'boutique': [
-            {'name': 'Vêtements', 'icon': '👕', 'link': '#'},
-            {'name': 'Électronique', 'icon': '📱', 'link': '#'}
-        ],
-        'ecole': [
-            {'name': 'Formations IT', 'icon': '💻', 'link': '#'},
-            {'name': 'Cours Vidéo', 'icon': '📚', 'link': '#'}
-        ]
-    }
-    
-    data = sub_categories.get(category.lower(), [])
-    return render_template('explorer_detail.html', category=category, items=data)
+#    sub_categories = {
+#        'divertissement': [
+#            {'name': 'Vidéos', 'icon': '🎬', 'link': '#'},
+#            {'name': 'Séries', 'icon': '📺', 'link': '#'},
+#            {'name': 'Musique', 'icon': '🎵', 'link': '#'}
+#        ],
+#        'boutique': [
+#            {'name': 'Vêtements', 'icon': '👕', 'link': '#'},
+#            {'name': 'Électronique', 'icon': '📱', 'link': '#'}
+#        ],
+#        'ecole': [
+#            {'name': 'Formations IT', 'icon': '💻', 'link': '#'},
+#            {'name': 'Cours Vidéo', 'icon': '📚', 'link': '#'}
+#        ]
+#    }
+#    
+#    data = sub_categories.get(category.lower(), [])
+#    return render_template('explorer_detail.html', category=category, items=data)
 
 @app.route('/profile/')
 @app.route('/profile/<username>')
