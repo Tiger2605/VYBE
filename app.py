@@ -87,7 +87,6 @@ if not os.path.exists(UPLOAD_FOLDER_PROFILES):
 def index():
     return render_template('index.html')
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -238,6 +237,14 @@ def logout():
     session.clear()
     flash("Vous avez été déconnecté.", "success")
     return redirect(url_for('login'))
+
+@app.route('/explorer')
+def explorer():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # On peut récupérer des suggestions d'amis ou des groupes ici
+    return render_template('explorer.html')
 
 @app.route('/profile/')
 @app.route('/profile/<username>')

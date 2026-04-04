@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Explorer - VYBE{% endblock %}
+
+{% block content %}
+<style>
+    .search-box {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 25px;
+        padding: 12px 20px;
+        width: 100%;
+        color: white;
+        margin-bottom: 25px;
+        outline: none;
+    }
+    .explorer-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .explore-card {
+        background: linear-gradient(45deg, #1a1a1a, #222);
+        border: 1px solid #333;
+        border-radius: 15px;
+        padding: 25px 15px;
+        text-align: center;
+        text-decoration: none;
+        color: white;
+        transition: 0.3s;
+    }
+    .explore-card:active { transform: scale(0.95); }
+    .explore-card i { font-size: 24px; display: block; margin-bottom: 10px; }
+    .card-title { font-weight: bold; font-size: 14px; }
+    .trending-section { margin-top: 30px; }
+    .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #ff4b2b; }
+</style>
+
+<div class="explorer-container">
+    <input type="text" class="search-box" placeholder="Rechercher un utilisateur ou un vibe...">
+
+    <div class="explorer-grid">
+        <a href="#" class="explore-card">
+            <span>🔥</span>
+            <div class="card-title">Tendances</div>
+        </a>
+        <a href="#" class="explore-card">
+            <span>👥</span>
+            <div class="card-title">Nouveaux amis</div>
+        </a>
+        <a href="#" class="explore-card">
+            <span>🎬</span>
+            <div class="card-title">Vidéos</div>
+        </a>
+        <a href="#" class="explore-card">
+            <span>🎵</span>
+            <div class="card-title">Musique</div>
+        </a>
+        <a href="#" class="explore-card">
+            <span>💻</span>
+            <div class="card-title">Tech & Dev</div>
+        </a>
+        <a href="#" class="explore-card">
+            <span>🌍</span>
+            <div class="card-title">Afrique</div>
+        </a>
+    </div>
+
+    <div class="trending-section">
+        <div class="section-title">Populaire en ce moment</div>
+        <p style="color: #666; font-size: 14px; text-align: center;">Bientôt : les hashtags les plus utilisés s'afficheront ici.</p>
+    </div>
+</div>
+{% endblock %}

@@ -141,7 +141,7 @@
             <div class="nav-upload">+</div>
         </a>
 
-        <a href="{{ url_for('dashboard') }}" class="nav-item">
+        <a href="{{ url_for('explorer') }}" class="nav-item {% if request.endpoint == 'explorer' %}active{% endif %}">
             <span class="nav-icon">🔍</span>
             <span class="nav-text">Explorer</span>
         </a>
