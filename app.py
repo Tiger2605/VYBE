@@ -609,6 +609,35 @@ def show_updates():
     updates = AppUpdate.query.order_by(AppUpdate.date.desc()).all()
     return render_template('updates.html', updates=updates)
 
+@app.route('/explorer/create', methods=['GET', 'POST'])
+def create_business():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        name = request.form.get('name')
+        category = request.form.get('category')
+        description = request.form.get('description')
+        
+        new_biz = Business(
+            name=name, 
+            category=category, 
+            description=description, 
+            owner_id=session['user_id']
+        )
+        db.session.add(new_biz)
+        db.session.commit()
+        flash("Votre business a été créé avec succès !", "success")
+        return redirect(url_for('explorer'))
+        
+    return render_template('create_business.html')
+
+@app.route('/explorer/<category>')
+def explorer_category(category):
+    # On récupère tous les business créés par les utilisateurs pour cette catégorie
+    businesses = Business.query.filter_by(category=category).all()
+    return render_template('explorer_detail.html', category=category, businesses=businesses)
+
 # --- ROUTES DE MAINTENANCE DE LA BASE ---
 
 

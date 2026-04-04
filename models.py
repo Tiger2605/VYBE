@@ -107,3 +107,15 @@ class AppUpdate(db.Model):
     title = db.Column(db.String(100))
     message = db.Column(db.Text)
     date = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Business(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(50), nullable=False) # boutique, ecole, etc.
+    description = db.Column(db.Text)
+    location = db.Column(db.String(255))
+    contact = db.Column(db.String(100))
+    image_url = db.Column(db.String(255), default="default_biz.png")
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    owner = db.relationship('User', backref=db.backref('businesses', lazy=True))

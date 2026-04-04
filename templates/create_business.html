@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container" style="background: #111; padding: 20px; border-radius: 15px; border: 1px solid #222;">
+    <h2 style="color: #ff4b2b;">Lancer mon Business</h2>
+    <form method="POST">
+        <label>Nom de l'activité</label>
+        <input type="text" name="name" class="search-box" style="margin-bottom:15px;" required>
+        
+        <label>Catégorie</label>
+        <select name="category" class="search-box" style="margin-bottom:15px; background:#000;">
+            <option value="boutique">Boutique / Shop</option>
+            <option value="divertissement">Divertissement</option>
+            <option value="ecole">École / Formation</option>
+            <option value="restaurant">Restaurant</option>
+            <option value="emploi">Offre d'emploi</option>
+        </select>
+        
+        <label>Description</label>
+        <textarea name="description" class="search-box" rows="4"></textarea>
+        
+        <button type="submit" class="biz-card special-add" style="width:100%; cursor:pointer;">
+            Publier mon Business
+        </button>
+    </form>
+</div>
+{% endblock %}
