@@ -699,6 +699,13 @@ def add_product(biz_id):
 
     return render_template('add_product.html', biz=biz)
 
+@app.route('/explorer/boutique/<int:biz_id>')
+def explorer_boutique(biz_id):
+    biz = Business.query.get_or_404(biz_id)
+    # CRITIQUE : Il faut récupérer les produits liés à cette boutique
+    products = Product.query.filter_by(business_id=biz.id).all()
+    return render_template('explorer_boutique.html', biz=biz, products=products)
+
 # --- ROUTES DE MAINTENANCE DE LA BASE ---
 # À SUPPRIMER COMPLÈTEMENT
 @app.route('/fix-db-complete')

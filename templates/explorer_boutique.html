@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}{{ biz.name }} - Boutique VIBE AFRICA{% endblock %}
+
+{% block content %}
+<style>
+    .boutique-container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+    
+    /* En-tête de la boutique */
+    .biz-banner {
+        background: #222;
+        padding: 30px;
+        border-radius: 20px;
+        text-align: center;
+        border: 1px solid #333;
+        margin-bottom: 30px;
+    }
+    .biz-icon {
+        font-size: 50px;
+        background: #1a1a1a;
+        width: 80px; height: 80px;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 15px;
+        border-radius: 50%;
+        border: 2px solid #ff4b2b;
+    }
+    .badge-category {
+        background: rgba(255, 75, 43, 0.1);
+        color: #ff4b2b;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    /* Grille de produits */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+    }
+    .product-card {
+        background: #1a1a1a;
+        border-radius: 15px;
+        overflow: hidden;
+        border: 1px solid #333;
+        transition: transform 0.3s;
+    }
+    .product-card:hover { transform: translateY(-5px); }
+    
+    .product-img {
+        height: 160px;
+        background: #222;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 50px;
+        position: relative;
+    }
+    .product-img img { width: 100%; height: 100%; object-fit: cover; }
+
+    .product-info { padding: 12px; text-align: left; }
+    .product-name { color: white; font-weight: bold; margin: 0; font-size: 14px; }
+    .product-price { color: #ff4b2b; font-size: 16px; font-weight: bold; margin: 5px 0; }
+    
+    .btn-buy {
+        display: block;
+        width: 100%;
+        background: #ff4b2b;
+        color: white;
+        text-align: center;
+        padding: 8px 0;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 12px;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="boutique-container">
+    <a href="{{ url_for('explorer_category', category=biz.category) }}" style="color: #666; text-decoration: none; font-size: 13px;">
+        ← Retour aux {{ biz.category }}
+    </a>
+
+    <div class="biz-banner">
+        <div class="biz-icon">
+            {% if biz.category == 'boutique' %} 🛍️ {% elif biz.category == 'ecole' %} 🎓 {% else %} 🏢 {% endif %}
+        </div>
+        <span class="badge-category">{{ biz.category }}</span>
+        <h1 style="color: white; margin: 10px 0 5px 0;">{{ biz.name }}</h1>
+        <p style="color: #888; font-style: italic; margin-bottom: 20px;">" {{ biz.description }} "</p>
+        
+        <a href="{{ url_for('contact_business', biz_id=biz.id) }}" 
+           style="background: #3498db; color: white; padding: 10px 25px; border-radius: 25px; text-decoration: none; font-weight: bold;">
+           💬 Contacter le vendeur
+        </a>
+    </div>
+
+    <h3 style="color: white; margin-bottom: 20px; border-left: 4px solid #ff4b2b; padding-left: 10px;">
+        Catalogue
+    </h3>
+
+    <div class="product-grid">
+        {% for prod in products %}
+            <div class="product-card">
+                <div class="product-img">
+                    {% if prod.image_main %}
+                        <img src="{{ prod.image_main }}" alt="{{ prod.name }}">
+                    {% else %}
+                        👕
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <p class="product-name">{{ prod.name }}</p>
+                    <p class="product-price">{{ prod.price }} $</p>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 10px; color: {% if prod.stock > 0 %}#2ecc71{% else %}#e74c3c{% endif %};">
+                            {% if prod.stock > 0 %} En stock ({{ prod.stock }}) {% else %} Rupture {% endif %}
+                        </span>
+                    </div>
+
+                    <a href="{{ url_for('contact_business', biz_id=biz.id) }}" class="btn-buy">
+                        Commander
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div style="grid-column: span 3; text-align: center; padding: 50px; color: #444;">
+                <p>Aucun produit n'a été ajouté à cette boutique pour le moment.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
