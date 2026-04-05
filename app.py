@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from models import Business, db, User, Group, GroupMessage, Like, Comment, FriendRequest, Video,Favorite, Message as MessageModel, AppUpdate
+from models import Business, Product, db, User, Group, GroupMessage, Like, Comment, FriendRequest, Video,Favorite, Message as MessageModel, AppUpdate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from itsdangerous import URLSafeTimedSerializer
@@ -655,6 +655,49 @@ def explorer_category(category):
     # On récupère tous les business créés par les utilisateurs pour cette catégorie
     businesses = Business.query.filter_by(category=category).all()
     return render_template('explorer_detail.html', category=category, businesses=businesses)
+
+@app.route('/business/dashboard/<int:biz_id>')
+def business_dashboard(biz_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    biz = Business.query.get_or_404(biz_id)
+    # Vérifier que c'est bien le propriétaire
+    if biz.owner_id != session['user_id']:
+        return "Accès non autorisé", 403
+        
+    products = Product.query.filter_by(business_id=biz.id).all()
+    return render_template('business_dashboard.html', biz=biz, products=products)
+
+@app.route('/business/<int:biz_id>/add-product', methods=['GET', 'POST'])
+def add_product(biz_id):
+    biz = Business.query.get_or_404(biz_id)
+    
+    # Sécurité : Seul le propriétaire peut ajouter des articles
+    if biz.owner_id != session.get('user_id'):
+        return "Accès interdit", 403
+
+    if request.method == 'POST':
+        # On récupère les tailles cochées sous forme de liste, puis on transforme en texte
+        selected_sizes = request.form.getlist('sizes')
+        sizes_string = ", ".join(selected_sizes)
+
+        new_product = Product(
+            name=request.form.get('name'),
+            price=float(request.form.get('price')),
+            description=request.form.get('description'),
+            stock=int(request.form.get('stock')),
+            sizes=sizes_string,
+            colors=request.form.get('colors'),
+            image_main=request.form.get('image_url'),
+            business_id=biz.id
+        )
+        
+        db.session.add(new_product)
+        db.session.commit()
+        return redirect(url_for('business_dashboard', biz_id=biz.id))
+
+    return render_template('add_product.html', biz=biz)
 
 # --- ROUTES DE MAINTENANCE DE LA BASE ---
 # À SUPPRIMER COMPLÈTEMENT

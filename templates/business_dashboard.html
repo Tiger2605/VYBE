@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div>
+        <h2 style="margin: 0;">{{ biz.name }}</h2>
+        <p style="color: #666; font-size: 13px;">Gestion du catalogue Mode</p>
+    </div>
+    <a href="{{ url_for('add_product', biz_id=biz.id) }}" 
+       style="background: #ff4b2b; color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 14px;">
+       + Ajouter un habit
+    </a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px;">
+    {% for product in products %}
+    <div style="background: #111; border: 1px solid #222; border-radius: 12px; overflow: hidden; position: relative;">
+        <div style="height: 150px; background: #1a1a1a;">
+            {% if product.image_main %}
+                <img src="{{ product.image_main }}" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #333; font-size: 40px;">👕</div>
+            {% endif %}
+        </div>
+
+        <div style="padding: 12px;">
+            <h4 style="margin: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ product.name }}</h4>
+            <p style="color: #ff4b2b; font-weight: bold; margin: 5px 0;">{{ product.price }} $</p>
+            
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                {% if product.stock > 0 %}
+                    <span style="font-size: 10px; background: rgba(46, 204, 113, 0.1); color: #2ecc71; padding: 2px 6px; border-radius: 4px;">Stock: {{ product.stock }}</span>
+                {% else %}
+                    <span style="font-size: 10px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; padding: 2px 6px; border-radius: 4px;">Épuisé</span>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 8px; border-top: 1px solid #222; padding-top: 10px;">
+                <a href="#" style="flex: 1; text-align: center; color: #888; text-decoration: none; font-size: 12px;">Modifier</a>
+                <a href="#" style="flex: 1; text-align: center; color: #e74c3c; text-decoration: none; font-size: 12px;">Supprimer</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background: #080808; border-radius: 15px; border: 1px dashed #222;">
+        <p style="color: #444;">Votre catalogue est vide.</p>
+        <p style="font-size: 12px; color: #333;">Commencez par ajouter votre premier article de mode.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

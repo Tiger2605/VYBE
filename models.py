@@ -125,3 +125,21 @@ class Business(db.Model):
     # CORRECTION ICI : Ajout de db. devant Boolean
     is_certified = db.Column(db.Boolean, default=False)
     is_secured = db.Column(db.Boolean, default=True)
+
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    description = db.Column(db.Text)
+    stock = db.Column(db.Integer, default=1)
+    # Spécificités Mode
+    sizes = db.Column(db.String(100))  # Ex: "S, M, L, XL"
+    colors = db.Column(db.String(100)) # Ex: "Noir, Bleu, Blanc"
+    material = db.Column(db.String(100)) # Ex: "Coton, Lin"
+    condition = db.Column(db.String(50)) # Ex: "Neuf, Occasion"
+    
+    # Gestion des images (Multi-photos)
+    image_main = db.Column(db.String(255))
+    image_alt = db.Column(db.Text) # URLs séparées par des virgules
+    
+    business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)

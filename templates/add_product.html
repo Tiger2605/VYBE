@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .studio-card { background: #111; border: 1px solid #222; padding: 25px; border-radius: 15px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; color: #888; margin-bottom: 8px; font-size: 13px; font-weight: bold; text-transform: uppercase; }
+    input, textarea, select { 
+        width: 100%; background: #1a1a1a; border: 1px solid #333; color: white; 
+        padding: 12px; border-radius: 8px; font-size: 15px; 
+    }
+    /* Style pour les sélecteurs de tailles */
+    .size-picker { display: flex; gap: 10px; flex-wrap: wrap; }
+    .size-item { position: relative; }
+    .size-item input { position: absolute; opacity: 0; cursor: pointer; }
+    .size-label { 
+        display: block; padding: 8px 15px; background: #222; border: 1px solid #333; 
+        border-radius: 5px; cursor: pointer; transition: 0.3s; font-size: 12px;
+    }
+    .size-item input:checked + .size-label { background: #ff4b2b; border-color: #ff4b2b; font-weight: bold; }
+
+    .btn-submit { 
+        width: 100%; background: #ff4b2b; color: white; border: none; padding: 15px; 
+        border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px;
+    }
+</style>
+
+<div style="margin-bottom: 20px;">
+    <a href="{{ url_for('business_dashboard', biz_id=biz.id) }}" style="color: #666; text-decoration: none;">✕ Annuler</a>
+    <h2 style="margin-top: 10px;">Ajouter un Article (Mode)</h2>
+</div>
+
+<div class="studio-card">
+    <form action="{{ url_for('add_product', biz_id=biz.id) }}" method="POST">
+        
+        <div class="form-group">
+            <label>Nom de l'habit (ex: Chemise Slim Fit)</label>
+            <input type="text" name="name" placeholder="Ex: Robe de soirée en soie" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>Prix (USD/FC)</label>
+                <input type="number" name="price" placeholder="0.00" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label>Stock disponible</label>
+                <input type="number" name="stock" value="1" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Tailles disponibles</label>
+            <div class="size-picker">
+                {% for s in ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Unique'] %}
+                <label class="size-item">
+                    <input type="checkbox" name="sizes" value="{{ s }}">
+                    <span class="size-label">{{ s }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Couleurs (séparées par des virgules)</label>
+            <input type="text" name="colors" placeholder="Ex: Rouge, Bleu Marine, Noir">
+        </div>
+
+        <div class="form-group">
+            <label>Description détaillée</label>
+            <textarea name="description" rows="4" placeholder="Matière, coupe, conseils d'entretien..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>URL de l'image (Principale)</label>
+            <input type="text" name="image_url" placeholder="https://...">
+        </div>
+
+        <button type="submit" class="btn-submit">🚀 Publier l'article</button>
+    </form>
+</div>
+{% endblock %}
