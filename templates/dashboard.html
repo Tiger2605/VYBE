@@ -149,10 +149,10 @@
             <span class="vibe-title"><strong>{{ video.title }}</strong></span>
             
             <div class="vibe-actions">
-                
-                <a href="{{ url_for('like_video', video_id=video.id) }}" class="action-link" style="color: #ff4b2b;">
-                    ❤️ {{ video.likes|length }}
-                </a>
+    
+                <div class="action-link" onclick="toggleLike('{{ video.id }}')" id="like-container-{{ video.id }}" style="color: #ff4b2b; cursor: pointer;">
+                    ❤️ <span id="like-count-{{ video.id }}">{{ video.likes|length }}</span>
+                </div>
 
                 <div class="action-link" onclick="toggleComments('{{ video.id }}')">
                     💬 <span style="font-size: 14px;">{{ video.comments|length }}</span>
@@ -162,9 +162,14 @@
                     👁️ <span id="view-count-{{ video.id }}">{{ video.views or 0 }}</span>
                 </div>
 
+                <div class="action-link" onclick="toggleFavorite('{{ video.id }}')" id="fav-container-{{ video.id }}" style="cursor: pointer; color: white;">
+                    🔖 <span style="font-size: 14px;">Favoris</span>
+                </div>
+
                 <div class="action-link" onclick="copyLink('{{ video.id }}')">
                     🔗 <span style="font-size: 14px;">Partager</span>
                 </div>
+
             </div>
 
             <div id="comment-section-{{ video.id }}" class="comment-area">
@@ -175,12 +180,15 @@
                 </form>
 
                 <div class="comment-list">
-                    {% for comment in video.comments %}
+                    {% for comment in video.comments|sort(attribute='created_at', reverse=true) %}
                         <div class="comment-item">
-                            <strong style="color: #ff4b2b;">@{{ comment.author.username }}</strong> {{ comment.content }}
+                            <strong style="color: #ff4b2b;">@{{ comment.author.username|lower }}</strong>
+                            <span style="color: #eee;">{{ comment.content }}</span>
                         </div>
                     {% else %}
-                        <p style="font-size: 11px; color: #666; text-align: center;">Soyez le premier à commenter !</p>
+                        <p style="font-size: 11px; color: #666; text-align: center;">
+                            Soyez le premier à donner votre avis ! 🌍
+                        </p>
                     {% endfor %}
                 </div>
             </div>
@@ -205,6 +213,52 @@
         navigator.clipboard.writeText(url).then(() => {
             alert("Lien copié ! Partage cette Vibe avec tes amis 🌍");
         });
+    }
+
+    // Gérer le Like en AJAX
+    function toggleLike(videoId) {
+        fetch(`/like/${videoId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const countSpan = document.getElementById(`like-count-${videoId}`);
+                if (countSpan) countSpan.innerText = data.likes_count;
+                
+                const container = document.getElementById(`like-container-${videoId}`);
+                if (container) {
+                    container.style.opacity = (data.action === 'liked') ? "1" : "0.5";
+                }
+            }
+        })
+        .catch(err => console.error("Erreur lors du like :", err));
+    }
+
+    // NOUVELLE FONCTION : Gérer les Favoris en AJAX
+    function toggleFavorite(videoId) {
+        fetch(`/favorite/${videoId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const container = document.getElementById(`fav-container-${videoId}`);
+                if (container) {
+                    // Si ajouté : icône jaune. Si retiré : icône blanche/normale.
+                    container.style.color = (data.action === 'added') ? "#f1c40f" : "white";
+                    
+                    // Optionnel : changement de texte
+                    const label = container.querySelector('span');
+                    if (label) {
+                        label.innerText = (data.action === 'added') ? "Enregistré" : "Favoris";
+                    }
+                }
+            }
+        })
+        .catch(err => console.error("Erreur favoris :", err));
     }
 
     document.querySelectorAll('video').forEach(videoElement => {

@@ -240,13 +240,19 @@
         {% for vibe in fav_videos %}
             <div class="grid-item">
                 <a href="{{ url_for('view_vibe', vibe_id=vibe.id) }}">
-                    <img src="{{ vibe.filename if vibe.category == 'Photos' else '#' }}">
-                    <span class="grid-badge">⭐</span>
+                    {% if vibe.category == 'Photos' %}
+                        <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}">
+                        <span class="grid-badge">📸</span>
+                    {% else %}
+                        <video src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" muted></video>
+                        <span class="grid-badge">⭐</span>
+                    {% endif %}
                 </a>
             </div>
         {% else %}
             <div style="grid-column: span 3; text-align: center; padding: 40px; color: #444;">
-                <p>Tes favoris apparaîtront ici.</p>
+                <p>Aucun favori enregistré. 🔖</p>
+                <a href="{{ url_for('dashboard') }}" style="color: #ff4b2b; text-decoration: none; font-size: 12px;">Parcourir le feed</a>
             </div>
         {% endfor %}
     </div>

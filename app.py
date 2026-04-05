@@ -10,6 +10,8 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Mail, Message as MailMessage
+from sqlalchemy.orm import joinedload
+from flask import jsonify
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -203,34 +205,54 @@ def reset_password(token):
 
 @app.route('/dashboard')
 def dashboard():
+    # 1. Vérification de la session
     if 'username' not in session:
         return redirect(url_for('login'))
     
+    # 2. Récupération des paramètres de filtrage (Catégorie et Recherche)
     selected_category = request.args.get('category')
     search_query = request.args.get('q') 
-    query = Video.query
     
+    # 3. Construction de la requête avec "joinedload"
+    # Cela force le chargement des commentaires et de leurs auteurs pour éviter qu'ils soient vides
+    query = Video.query.options(
+        joinedload(Video.comments).joinedload(Comment.author),
+        joinedload(Video.author)
+    )
+    
+    # 4. Application des filtres
     if selected_category:
-        query = query.filter_by(category=selected_category)
+        # Utilisation de ilike pour éviter les erreurs de majuscules/minuscules
+        query = query.filter(Video.category.ilike(selected_category))
         
     if search_query:
         query = query.filter(Video.title.ilike(f"%{search_query}%"))
         
+    # 5. Exécution de la requête (Tri par date décroissante)
     videos = query.order_by(Video.created_at.desc()).all()
     
+    # 6. Fonction interne pour les demandes d'amis (Logique existante)
     def get_pending_requests():
-        requests = FriendRequest.query.filter_by(receiver_id=session['user_id'], status='pending').all()
+        # On récupère les demandes 'pending' pour l'utilisateur connecté
+        requests = FriendRequest.query.filter_by(
+            receiver_id=session.get('user_id'), 
+            status='pending'
+        ).all()
+        
         for req in requests:
             sender = User.query.get(req.sender_id)
             if sender:
                 req.sender_name = sender.username
         return requests
             
-    return render_template('dashboard.html', 
-                           videos=videos, 
-                           get_pending_requests=get_pending_requests,
-                           selected_category=selected_category,
-                           search_query=search_query)
+    # 7. Envoi des données au template
+    return render_template(
+        'dashboard.html', 
+        videos=videos, 
+        get_pending_requests=get_pending_requests,
+        selected_category=selected_category,
+        search_query=search_query
+    )
 
 @app.route('/logout')
 def logout():
@@ -268,43 +290,47 @@ def explorer():
 @app.route('/profile/')
 @app.route('/profile/<username>')
 def profile(username=None):
-    # 1. Gestion des accès
-    if username is None and 'user_id' not in session:
-        return render_template('profile_guest.html')
-
-    if username is None and 'user_id' in session:
+    # 1. Gestion des accès (Redirection si pas de username et pas connecté)
+    if username is None:
+        if 'user_id' not in session:
+            return render_template('profile_guest.html')
         username = session['username']
     
-    # 2. Récupération de l'utilisateur
+    # 2. Récupération de l'utilisateur cible
     user = User.query.filter_by(username=username).first_or_404()
     
-    # --- AJOUT : Récupération des services/boutiques de cet utilisateur ---
-    user_businesses = Business.query.filter_by(owner_id=user.id).all()
-    
-    # 3. Récupération des données pour les onglets
+    # 3. Vérification : est-ce mon propre profil ?
+    is_own_profile = False
+    me = None
+    if 'user_id' in session:
+        me = User.query.get(session['user_id'])
+        is_own_profile = (me.id == user.id)
+
+    # 4. Récupération des données pour les onglets
+    # --- Onglet Vibes (ses publications) ---
     vibes = Video.query.filter_by(user_id=user.id).order_by(Video.created_at.desc()).all()
     
+    # --- Onglet Likes ---
     liked_ids = [l.video_id for l in Like.query.filter_by(user_id=user.id).all()]
     liked_videos = Video.query.filter(Video.id.in_(liked_ids)).all() if liked_ids else []
     
-    fav_ids = [f.video_id for f in Favorite.query.filter_by(user_id=user.id).all()]
-    fav_videos = Video.query.filter(Video.id.in_(fav_ids)).all() if fav_ids else []
+    # --- Onglet Favoris (On n'ajoute la liste fav_videos que si c'est MON profil) ---
+    fav_videos = []
+    if is_own_profile:
+        fav_ids = [f.video_id for f in Favorite.query.filter_by(user_id=user.id).all()]
+        fav_videos = Video.query.filter(Video.id.in_(fav_ids)).all() if fav_ids else []
     
-    # 4. Statistiques et Relations
+    # 5. Services/Boutiques (Studio)
+    user_businesses = Business.query.filter_by(owner_id=user.id).all()
+    
+    # 6. Statistiques et Relations (Amis)
     friends_count = FriendRequest.query.filter(
         ((FriendRequest.sender_id == user.id) | (FriendRequest.receiver_id == user.id)),
         (FriendRequest.status == 'accepted')
     ).count()
     
-    me = None
     friendship = None
-    is_own_profile = False
-    
-    if 'user_id' in session:
-        me = User.query.get(session['user_id'])
-        if me.id == user.id:
-            is_own_profile = True
-        
+    if me and not is_own_profile:
         friendship = FriendRequest.query.filter(
             ((FriendRequest.sender_id == me.id) & (FriendRequest.receiver_id == user.id)) |
             ((FriendRequest.sender_id == user.id) & (FriendRequest.receiver_id == me.id)),
@@ -317,8 +343,8 @@ def profile(username=None):
                            friendship=friendship, 
                            vibes=vibes, 
                            liked_videos=liked_videos,
-                           fav_videos=fav_videos,
-                           user_businesses=user_businesses, # Envoyé au template
+                           fav_videos=fav_videos, # La liste est maintenant bien transmise
+                           user_businesses=user_businesses, 
                            is_own_profile=is_own_profile,
                            friends_count=friends_count)
 
@@ -464,27 +490,81 @@ def upload_video():
             
     return render_template('upload.html')
 
-@app.route('/like/<int:video_id>')
+@app.route('/like/<int:video_id>', methods=['POST']) # On passe en POST pour plus de sécurité
 def like_video(video_id):
     if 'user_id' not in session:
-        return redirect(url_for('login'))
+        return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
         
     existing_like = Like.query.filter_by(user_id=session['user_id'], video_id=video_id).first()
+    video = Video.query.get_or_404(video_id)
     
     if existing_like:
         db.session.delete(existing_like) 
+        action = "unliked"
     else:
         new_like = Like(user_id=session['user_id'], video_id=video_id)
         db.session.add(new_like) 
+        action = "liked"
         
     db.session.commit()
-    return redirect(url_for('dashboard'))
+    
+    # On renvoie le nouveau compte de likes au format JSON
+    return jsonify({
+        'status': 'success',
+        'action': action,
+        'likes_count': len(video.likes)
+    })
+
+@app.route('/favorite/<int:video_id>', methods=['POST'])
+def toggle_favorite(video_id):
+    # 1. Vérifier si l'utilisateur est connecté
+    if 'user_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
+    
+    user_id = session['user_id']
+    
+    # 2. Chercher si ce favori existe déjà pour cet utilisateur
+    existing_fav = Favorite.query.filter_by(user_id=user_id, video_id=video_id).first()
+    
+    if existing_fav:
+        # Si il existe, on le retire (Toggle OFF)
+        db.session.delete(existing_fav)
+        action = "removed"
+    else:
+        # Si il n'existe pas, on l'ajoute (Toggle ON)
+        new_fav = Favorite(user_id=user_id, video_id=video_id)
+        db.session.add(new_fav)
+        action = "added"
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'status': 'success',
+            'action': action
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+@app.route('/my_favorites')
+def my_favorites():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # On récupère les IDs des vidéos que l'utilisateur a mis en favoris
+    user_id = session['user_id']
+    user_favs = Favorite.query.filter_by(user_id=user_id).all()
+    
+    # On extrait les objets "Video" de ces favoris
+    fav_videos = [fav.video for fav in user_favs]
+    
+    return render_template('favorites.html', videos=fav_videos)
 
 @app.route('/comment/<int:video_id>', methods=['POST'])
 def add_comment(video_id):
     if 'user_id' not in session:
-        return redirect(url_for('login'))
-        
+        return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
+    
     content = request.form.get('content')
     if content:
         new_comment = Comment(content=content, user_id=session['user_id'], video_id=video_id)

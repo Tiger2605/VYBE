@@ -143,3 +143,13 @@ class Product(db.Model):
     image_alt = db.Column(db.Text) # URLs séparées par des virgules
     
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+
+class Favorite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relations pour faciliter l'accès
+    user = db.relationship('User', backref=db.backref('favorites', lazy=True))
+    video = db.relationship('Video', backref=db.backref('favorited_by', lazy=True))
