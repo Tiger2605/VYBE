@@ -155,7 +155,45 @@
                 <a href="{{ url_for('logout') }}" class="btn-profile btn-logout">Se déconnecter</a>
             </div>
         {% endif %}
-    </div>
+
+        {# --- BLOC SERVICES & BOUTIQUES (STUDIO) --- #}
+        {% if user_businesses %}
+            <div style="margin-top: 25px; text-align: left; border-top: 1px solid #333; padding-top: 15px;">
+                <p style="margin: 0 0 10px 0; font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">
+                    Services & Boutiques
+                </p>
+                
+                {% for biz in user_businesses %}
+                <div style="background: #1a1a1a; padding: 12px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222;">
+                    <div style="overflow: hidden;">
+                        <span style="display: block; color: white; font-size: 13px; font-weight: bold; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                            {{ biz.name }}
+                        </span>
+                        <span style="font-size: 10px; color: #ff4b2b;">{{ biz.category | capitalize }}</span>
+                    </div>
+                    
+                    {% if is_own_profile %}
+                        <a href="{{ url_for('business_dashboard', biz_id=biz.id) }}" 
+                           style="background: #333; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 11px; border: 1px solid #444; font-weight: bold;">
+                            Gérer 🛠
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('explorer_category', category=biz.category) }}" 
+                           style="background: transparent; color: #ff4b2b; padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 11px; border: 1px solid #ff4b2b;">
+                            Visiter 👁️
+                        </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% elif is_own_profile %}
+            <div style="margin-top: 20px; border-top: 1px dashed #333; padding-top: 15px;">
+                <a href="{{ url_for('create_business') }}" style="color: #ff4b2b; text-decoration: none; font-size: 12px; font-weight: bold;">
+                    + Lancer mon activité sur Vibe Africa
+                </a>
+            </div>
+        {% endif %}
+    </div> {# Fin de la div profile-card #}
 
     <div class="profile-tabs">
         <button class="tab-btn active" onclick="switchTab(event, 'tab-vibes')">📍 Vibes</button>
@@ -220,19 +258,16 @@
 
 <script>
     function switchTab(evt, tabId) {
-        // Cacher tous les contenus
         const contents = document.getElementsByClassName("tab-content");
         for (let content of contents) {
             content.classList.remove("active");
         }
 
-        // Désactiver tous les boutons
         const tabs = document.getElementsByClassName("tab-btn");
         for (let tab of tabs) {
             tab.classList.remove("active");
         }
 
-        // Afficher l'onglet actuel
         document.getElementById(tabId).classList.add("active");
         evt.currentTarget.classList.add("active");
     }

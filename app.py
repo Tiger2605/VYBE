@@ -268,25 +268,25 @@ def explorer():
 @app.route('/profile/')
 @app.route('/profile/<username>')
 def profile(username=None):
-    # 1. Gestion des accès (Visiteur vs Connecté)
+    # 1. Gestion des accès
     if username is None and 'user_id' not in session:
         return render_template('profile_guest.html')
 
     if username is None and 'user_id' in session:
         username = session['username']
     
-    # 2. Récupération de l'utilisateur ciblé
+    # 2. Récupération de l'utilisateur
     user = User.query.filter_by(username=username).first_or_404()
     
-    # 3. Récupération des données pour les onglets (Vibes, Likes, Favoris)
-    # Mes publications
+    # --- AJOUT : Récupération des services/boutiques de cet utilisateur ---
+    user_businesses = Business.query.filter_by(owner_id=user.id).all()
+    
+    # 3. Récupération des données pour les onglets
     vibes = Video.query.filter_by(user_id=user.id).order_by(Video.created_at.desc()).all()
     
-    # Vidéos que j'ai likées (On cherche dans la table Like)
     liked_ids = [l.video_id for l in Like.query.filter_by(user_id=user.id).all()]
     liked_videos = Video.query.filter(Video.id.in_(liked_ids)).all() if liked_ids else []
     
-    # Vidéos en favoris (On cherche dans la table Favorite)
     fav_ids = [f.video_id for f in Favorite.query.filter_by(user_id=user.id).all()]
     fav_videos = Video.query.filter(Video.id.in_(fav_ids)).all() if fav_ids else []
     
@@ -305,7 +305,6 @@ def profile(username=None):
         if me.id == user.id:
             is_own_profile = True
         
-        # Vérification si nous sommes déjà amis
         friendship = FriendRequest.query.filter(
             ((FriendRequest.sender_id == me.id) & (FriendRequest.receiver_id == user.id)) |
             ((FriendRequest.sender_id == user.id) & (FriendRequest.receiver_id == me.id)),
@@ -317,8 +316,9 @@ def profile(username=None):
                            current_user_obj=me, 
                            friendship=friendship, 
                            vibes=vibes, 
-                           liked_videos=liked_videos, # Nouveau
-                           fav_videos=fav_videos,     # Nouveau
+                           liked_videos=liked_videos,
+                           fav_videos=fav_videos,
+                           user_businesses=user_businesses, # Envoyé au template
                            is_own_profile=is_own_profile,
                            friends_count=friends_count)
 
