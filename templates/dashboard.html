@@ -179,7 +179,8 @@
                     </span>
                 </div>    
 
-                <div class="action-link" onclick="toggleFavorite('{{ video.id }}')" id="fav-container-{{ video.id }}" style="cursor: pointer; color: white;">
+                <div class="action-link" onclick="toggleFavorite('{{ video.id }}')" id="fav-container-{{ video.id }}" 
+                    style="cursor: pointer; color: {{ '#f1c40f' if current_user.is_authenticated and video in current_user.favorites else 'white' }};">
                     🔖 <span style="font-size: 14px;">Favoris</span>
                 </div>
 
@@ -311,6 +312,7 @@
     }
 
     function toggleFollow(authorId) {
+        alert("Le bouton de l'auteur " + authorId + " a été cliqué");
         fetch(`/follow/${authorId}`, { method: 'POST' })
         .then(response => {
             if (response.status === 401) {
