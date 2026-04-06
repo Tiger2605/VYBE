@@ -145,6 +145,6 @@ class Favorite(db.Model):
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # On utilise des noms de backref uniques : 'user_favorites' et 'video_favorited_by'
-    user = db.relationship('User', backref=db.backref('user_favorites', lazy=True))
-    video = db.relationship('Video', backref=db.backref('video_favorited_by', lazy=True))
+    # Utilisation de noms de backref très spécifiques pour éviter les doublons
+    user_rel = db.relationship('User', backref=db.backref('my_favorites', lazy=True))
+    video_rel = db.relationship('Video', backref=db.backref('favorited_by_users', lazy=True))
