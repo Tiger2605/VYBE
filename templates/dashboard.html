@@ -258,7 +258,7 @@
         .catch(err => console.error("Erreur favoris :", err));
     }
 
-    // Gérer le Commentaire en AJAX
+    // Gérer le Commentaire en AJAX (CORRIGÉ AVEC COMPTEUR)
     function submitComment(event, videoId) {
         event.preventDefault(); 
         
@@ -274,16 +274,24 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
+                // 1. On ajoute le commentaire à la liste
                 const newComment = document.createElement('div');
                 newComment.className = 'comment-item';
                 newComment.innerHTML = `<strong style="color: #ff4b2b;">@${data.username}</strong> <span style="color: #eee;">${data.content}</span>`;
                 
                 list.prepend(newComment);
                 input.value = ""; 
+
+                // 2. On met à jour le compteur visuel (💬)
+                const countSpan = document.getElementById(`comment-count-${videoId}`);
+                if (countSpan) {
+                    let currentCount = parseInt(countSpan.innerText) || 0;
+                    countSpan.innerText = currentCount + 1;
+                }
             }
         })
         .catch(err => console.error("Erreur commentaire :", err));
-    } // <--- L'accolade qui manquait ici !
+    }
 
     // Gestion du compteur de vues
     document.querySelectorAll('video').forEach(videoElement => {
