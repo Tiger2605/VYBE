@@ -22,7 +22,7 @@ group_members = db.Table('group_members',
 # ---------------------------------------------------------
 # MODÈLES DE DONNÉES
 # ---------------------------------------------------------
-class User(db.Model):
+class User(db.Model, UserMixin): # N'oublie pas UserMixin pour flask-login
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -31,9 +31,14 @@ class User(db.Model):
     profile_pic = db.Column(db.String(255), default='default_profile.png')
     google_id = db.Column(db.String(100), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True)
+
+    # RELATION UNIQUE VERS LES FAVORIS (On garde celle-ci)
     my_favorites = db.relationship('Favorite', back_populates='user_rel', lazy='dynamic', cascade='all, delete-orphan')
 
-    Video = db.relationship('Video', backref='author', lazy=True)
+    # Relation vers les vidéos postées
+    videos = db.relationship('Video', backref='author', lazy=True) 
+
+    # Système de followers (Abonnements)
     following = db.relationship(
         'User', secondary=followers,
         primaryjoin=(followers.c.follower_id == id),
@@ -41,7 +46,19 @@ class User(db.Model):
         backref=db.backref('followers', lazy='dynamic'), lazy='dynamic'
     )
     
-    favorites = db.relationship('Favorite', backref='user', lazy='dynamic')
+    # --- J'AI SUPPRIMÉ LA LIGNE "favorites =" ICI POUR ÉVITER LE CONFLIT ---
+
+class Favorite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Liaison bidirectionnelle avec User.my_favorites
+    user_rel = db.relationship('User', back_populates='my_favorites')
+    
+    # Liaison avec la vidéo
+    video_rel = db.relationship('Video', backref=db.backref('favorited_by_users', lazy=True))
 
     # --- FONCTIONS D'AIDE AJOUTÉES ---
 
@@ -153,14 +170,3 @@ class Product(db.Model):
     image_alt = db.Column(db.Text) # URLs séparées par des virgules
     
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
-
-class Favorite(db.Model):
-    __table_args__ = {'extend_existing': True} 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # Utilisation de noms de backref très spécifiques pour éviter les doublons
-    user_rel = db.relationship('User', back_populates='my_favorites')
-    video_rel = db.relationship('Video', backref=db.backref('favorited_by_users', lazy=True))
