@@ -87,8 +87,9 @@ class Video(db.Model):
     category = db.Column(db.String(50), nullable=False, default='Autres')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     likes = db.relationship('Like', backref='video', lazy=True)
-    favs = db.relationship('Favorite', backref='video', lazy=True) # AJOUT : Lien Video -> Favoris
+    
     views = db.Column(db.Integer, default=0)
+    comments = db.relationship('Comment', backref='video_associated', lazy=True, cascade="all, delete-orphan")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Message(db.Model):
