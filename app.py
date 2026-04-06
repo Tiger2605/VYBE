@@ -553,7 +553,7 @@ def add_comment(video_id):
         db.session.commit()
         flash("Commentaire ajouté !", "success")
     
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard') + f'#video-{video_id}')
 
 @app.route('/increment_view/<int:video_id>', methods=['POST'])
 def increment_view(video_id):
