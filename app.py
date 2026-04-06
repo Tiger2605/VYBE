@@ -454,18 +454,26 @@ def toggle_follow(author_id):
 
 from flask import jsonify
 
-@app.route('/follow/<author_id>', methods=['POST'])
+from flask import jsonify, session, redirect, url_for, request
+
+@app.route('/follow/<int:author_id>', methods=['GET', 'POST'])
 def follow(author_id):
     # 1. Vérification de la session
     if 'user_id' not in session:
-        return jsonify({'status': 'error', 'message': 'Non connecté'}), 401
+        # Si c'est du JS, on répond en JSON, sinon on redirige vers login
+        if request.method == 'POST' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'status': 'error', 'message': 'Non connecté'}), 401
+        return redirect(url_for('login'))
         
-    # 2. Récupération de l'utilisateur (on cherche par ID car ton JS envoie l'ID)
+    # 2. Récupération des utilisateurs
     user_to_follow = User.query.get_or_404(author_id)
     me = User.query.get(session['user_id'])
     
+    # Sécurité : ne pas se suivre soi-même
     if user_to_follow == me:
-        return jsonify({'status': 'error', 'message': 'Impossible de se suivre soi-même'}), 400
+        if request.method == 'POST':
+            return jsonify({'status': 'error', 'message': 'Action impossible'}), 400
+        return redirect(url_for('profile', username=user_to_follow.username))
 
     # 3. Logique Follow / Unfollow
     if user_to_follow in me.following:
@@ -477,12 +485,17 @@ def follow(author_id):
     
     db.session.commit()
 
-    # 4. RÉPONSE JSON (Crucial pour le JavaScript)
-    return jsonify({
-        'status': 'success',
-        'action': action,
-        'count': user_to_follow.followers.count()
-    })
+    # 4. Gestion de la réponse selon la méthode
+    # Si c'est du JavaScript (POST ou AJAX)
+    if request.method == 'POST' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'status': 'success',
+            'action': action,
+            'count': user_to_follow.followers.count()
+        })
+
+    # Si c'est un clic sur un lien <a> (GET)
+    return redirect(request.referrer or url_for('profile', username=user_to_follow.username))
 
 @app.route('/add_friend/<int:receiver_id>')
 def add_friend(receiver_id):

@@ -130,9 +130,13 @@
 
         {% if not is_own_profile %}
             <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-                <a href="{{ url_for('follow', author_id=user.id) }}" class="btn-profile btn-follow">
-                    {% if current_user_obj and user in current_user_obj.following %} ✓ Abonné {% else %} S'abonner {% endif %}
-                </a>
+                <button onclick="toggleFollow({{ user.id }})" class="btn-profile btn-follow" id="follow-btn-{{ user.id }}">
+                    {% if current_user_obj and user in current_user_obj.following %} 
+                        ✓ Abonné 
+                    {% else %} 
+                        S'abonner 
+                    {% endif %}
+                </button>
 
                 {% if not friendship %}
                     <a href="{{ url_for('add_friend', receiver_id=user.id) }}" class="btn-profile btn-friend">
