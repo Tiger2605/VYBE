@@ -139,12 +139,12 @@ class Product(db.Model):
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
 
 class Favorite(db.Model):
-    __table_args__ = {'extend_existing': True} # Permet de redefinir la table sans erreur
+    __table_args__ = {'extend_existing': True} 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relations pour faciliter l'accès
-    user = db.relationship('User', backref=db.backref('favorites', lazy=True))
-    video = db.relationship('Video', backref=db.backref('favorited_by', lazy=True))
+    # On utilise des noms de backref uniques : 'user_favorites' et 'video_favorited_by'
+    user = db.relationship('User', backref=db.backref('user_favorites', lazy=True))
+    video = db.relationship('Video', backref=db.backref('video_favorited_by', lazy=True))
