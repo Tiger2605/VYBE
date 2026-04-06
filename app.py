@@ -2,7 +2,7 @@ import re
 import os
 from sqlalchemy import text
 from flask_migrate import Migrate
-from flask_login import login_required, current_user
+from flask_login import LoginManager ,login_required, current_user
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
@@ -19,6 +19,12 @@ import cloudinary.api
 
 # 1. CRÉATION DE L'APPLICATION
 app = Flask(__name__)
+
+# -- CONFIGURATION DE LOGIN MANAGER (Flask-Login) ---
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 # 2. CONFIGURATION DE LA CLÉ SECRÈTE
 app.secret_key = os.environ.get('SECRET_KEY', 'vybe_africa_secret_key_2026')
@@ -89,6 +95,10 @@ if not os.path.exists(UPLOAD_FOLDER_PROFILES):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
