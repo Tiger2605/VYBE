@@ -1,0 +1,21 @@
+{
+  "name": "VYBE Africa",
+  "short_name": "VYBE",
+  "description": "Partagez vos vibes à travers l'Afrique",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#ff4b2b",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
