@@ -541,7 +541,7 @@ def my_favorites():
     
     return render_template('favorites.html', videos=fav_videos)
 
-@app.route('/comment/<int:video_id>', methods=['POST'])
+@app.route('/add_comment/<int:video_id>', methods=['POST'])
 def add_comment(video_id):
     if 'user_id' not in session:
         return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
