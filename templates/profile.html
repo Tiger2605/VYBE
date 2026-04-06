@@ -130,7 +130,7 @@
 
         {% if not is_own_profile %}
             <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-                <a href="{{ url_for('follow', username=user.username) }}" class="btn-profile btn-follow">
+                <a href="{{ url_for('follow', author_id=user.id) }}" class="btn-profile btn-follow">
                     {% if current_user_obj and user in current_user_obj.following %} ✓ Abonné {% else %} S'abonner {% endif %}
                 </a>
 
