@@ -173,8 +173,8 @@
             </div>
 
             <div id="comment-section-{{ video.id }}" class="comment-area">
-                <form action="{{ url_for('add_comment', video_id=video.id) }}" method="POST" style="display: flex; gap: 8px;">
-                    <input type="text" name="content" placeholder="Ton avis..." required 
+                <form onsubmit="submitComment(event, '{{ video.id }}')" style="display: flex; gap: 8px;">
+                    <input type="text" id="comment-input-{{ video.id }}" name="content" placeholder="Ton avis..." required 
                            style="flex: 1; background: #333; border: 1px solid #444; color: white; padding: 8px 12px; border-radius: 20px; font-size: 13px;">
                     <button type="submit" style="background: #ff4b2b; border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;">OK</button>
                 </form>

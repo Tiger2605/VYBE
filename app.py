@@ -546,14 +546,31 @@ def add_comment(video_id):
     if 'user_id' not in session:
         return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
     
-    content = request.form.get('content')
+    # On gère les deux cas : soit les données viennent d'un formulaire classique, soit du JSON (AJAX)
+    data = request.get_json()
+    if data:
+        content = data.get('content')
+    else:
+        content = request.form.get('content')
+
     if content:
+        # On récupère l'utilisateur pour renvoyer son nom au JavaScript
+        from models import User # Assure-toi que l'import est correct
+        user = User.query.get(session['user_id'])
+        
         new_comment = Comment(content=content, user_id=session['user_id'], video_id=video_id)
         db.session.add(new_comment)
         db.session.commit()
-        flash("Commentaire ajouté !", "success")
+        
+        # On renvoie du JSON pour que le JavaScript puisse l'afficher sans recharger
+        return jsonify({
+            'status': 'success',
+            'message': 'Commentaire ajouté !',
+            'content': content,
+            'username': user.username.lower() # On renvoie le pseudo pour l'affichage
+        })
     
-    return redirect(url_for('dashboard') + f'#video-{video_id}')
+    return jsonify({'status': 'error', 'message': 'Contenu vide'}), 400
 
 @app.route('/increment_view/<int:video_id>', methods=['POST'])
 def increment_view(video_id):
