@@ -452,22 +452,37 @@ def toggle_follow(author_id):
     
     return jsonify({'status': 'success', 'action': action})
 
-@app.route('/follow/<username>')
-def follow(username):
+from flask import jsonify
+
+@app.route('/follow/<author_id>', methods=['POST'])
+def follow(author_id):
+    # 1. Vérification de la session
     if 'user_id' not in session:
-        return redirect(url_for('login'))
+        return jsonify({'status': 'error', 'message': 'Non connecté'}), 401
         
-    user_to_follow = User.query.filter_by(username=username).first_or_404()
+    # 2. Récupération de l'utilisateur (on cherche par ID car ton JS envoie l'ID)
+    user_to_follow = User.query.get_or_404(author_id)
     me = User.query.get(session['user_id'])
     
-    if user_to_follow != me:
-        if user_to_follow in me.following:
-            me.following.remove(user_to_follow) 
-        else:
-            me.following.append(user_to_follow) 
-        db.session.commit()
+    if user_to_follow == me:
+        return jsonify({'status': 'error', 'message': 'Impossible de se suivre soi-même'}), 400
+
+    # 3. Logique Follow / Unfollow
+    if user_to_follow in me.following:
+        me.following.remove(user_to_follow)
+        action = 'unfollowed'
+    else:
+        me.following.append(user_to_follow)
+        action = 'followed'
     
-    return redirect(url_for('profile', username=username))
+    db.session.commit()
+
+    # 4. RÉPONSE JSON (Crucial pour le JavaScript)
+    return jsonify({
+        'status': 'success',
+        'action': action,
+        'count': user_to_follow.followers.count()
+    })
 
 @app.route('/add_friend/<int:receiver_id>')
 def add_friend(receiver_id):
