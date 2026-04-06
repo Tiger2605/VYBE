@@ -155,7 +155,7 @@
                 </div>
 
                 <div class="action-link" onclick="toggleComments('{{ video.id }}')">
-                    💬 <span style="font-size: 14px;">{{ video.comments|length }}</span>
+                    💬 <span id="comment-count-{{ video.id }}" style="font-size: 14px;">{{ video.comments|length }}</span>
                 </div>
 
                 <div class="action-link view-count-box">
