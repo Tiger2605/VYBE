@@ -145,6 +145,7 @@ class Product(db.Model):
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
 
 class Favorite(db.Model):
+    __table_args__ = {'extend_existing': True} # Permet de redefinir la table sans erreur
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)
