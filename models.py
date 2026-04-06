@@ -31,7 +31,7 @@ class User(db.Model):
     profile_pic = db.Column(db.String(255), default='default_profile.png')
     google_id = db.Column(db.String(100), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True)
-    my_favorites = db.relationship('Favorite', backref='user_fav', lazy='dynamic', overlaps="favorites,user")
+    my_favorites = db.relationship('Favorite', back_populates='user_rel', lazy='dynamic', cascade='all, delete-orphan')
 
     Video = db.relationship('Video', backref='author', lazy=True)
     following = db.relationship(
@@ -162,5 +162,5 @@ class Favorite(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Utilisation de noms de backref très spécifiques pour éviter les doublons
-    user_rel = db.relationship('User', backref=db.backref('my_favorites', lazy=True))
+    user_rel = db.relationship('User', back_populates='my_favorites')
     video_rel = db.relationship('Video', backref=db.backref('favorited_by_users', lazy=True))
