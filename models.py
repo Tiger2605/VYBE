@@ -31,7 +31,7 @@ class User(db.Model):
     profile_pic = db.Column(db.String(255), default='default_profile.png')
     google_id = db.Column(db.String(100), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True)
-    my_favorites = db.relationship('Favorite', backref='user_rel', lazy='dynamic', overlaps="favorites,user")
+    my_favorites = db.relationship('Favorite', backref='user_fav', lazy='dynamic', overlaps="favorites,user")
 
     Video = db.relationship('Video', backref='author', lazy=True)
     following = db.relationship(
