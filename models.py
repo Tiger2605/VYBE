@@ -144,7 +144,7 @@ class Favorite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Utilisation de noms de backref très spécifiques pour éviter les doublons
     user_rel = db.relationship('User', backref=db.backref('my_favorites', lazy=True))
