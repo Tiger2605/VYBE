@@ -396,24 +396,36 @@ def followers_list(username):
     return render_template('users_list.html', title="Abonnés de " + username, users=user.followers.all())
 
 # --- ROUTE : FAVORIS (Toggle) ---
-@app.route('/toggle_favorite/<int:video_id>', methods=['POST'])
+@app.route('/favorite/<int:video_id>', methods=['POST'])
 def toggle_favorite(video_id):
+    # 1. Vérifier si l'utilisateur est connecté
     if 'user_id' not in session:
-        return redirect(url_for('login'))
+        return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
     
     user_id = session['user_id']
-    existing = Favorite.query.filter_by(user_id=user_id, video_id=video_id).first()
     
-    if existing:
-        db.session.delete(existing)
-        flash("Retiré des favoris")
+    # 2. Chercher si ce favori existe déjà
+    existing_fav = Favorite.query.filter_by(user_id=user_id, video_id=video_id).first()
+    
+    if existing_fav:
+        # Si il existe, on le retire
+        db.session.delete(existing_fav)
+        action = "removed"
     else:
+        # Si il n'existe pas, on l'ajoute
         new_fav = Favorite(user_id=user_id, video_id=video_id)
         db.session.add(new_fav)
-        flash("Ajouté aux favoris ⭐")
-        
-    db.session.commit()
-    return redirect(request.referrer or url_for('dashboard'))
+        action = "added"
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'status': 'success',
+            'action': action
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @app.route('/follow/<username>')
@@ -523,15 +535,15 @@ def toggle_favorite(video_id):
     
     user_id = session['user_id']
     
-    # 2. Chercher si ce favori existe déjà pour cet utilisateur
+    # 2. Chercher si ce favori existe déjà
     existing_fav = Favorite.query.filter_by(user_id=user_id, video_id=video_id).first()
     
     if existing_fav:
-        # Si il existe, on le retire (Toggle OFF)
+        # Si il existe, on le retire
         db.session.delete(existing_fav)
         action = "removed"
     else:
-        # Si il n'existe pas, on l'ajoute (Toggle ON)
+        # Si il n'existe pas, on l'ajoute
         new_fav = Favorite(user_id=user_id, video_id=video_id)
         db.session.add(new_fav)
         action = "added"
