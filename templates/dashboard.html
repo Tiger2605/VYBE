@@ -164,14 +164,18 @@
             
                 <div class="action-link" onclick="toggleFollow('{{ video.author.id }}')" id="follow-container-{{ video.author.id }}" style="cursor: pointer;">
                     <span id="follow-icon-{{ video.author.id }}">
-                        {% if current_user.is_authenticated %} 
-                            {{ '✅' if current_user.is_following(video.author) else '👤' }}
+                        {% if current_user.is_authenticated and current_user.is_following(video.author) %} 
+                            ✅
                         {% else %}
                             👤
                         {% endif %} 
                     </span>
-                    <span id="follow-text-{{ video.author.id }}" style="font-size: 13px; font-weight: bold; color: {{ '#888' if current_user.is_following(video.author) else '#ff4b2b' }};">
-                        {{ 'Abonné' if current_user.is_following(video.author) else 'S\'abonner' }}
+                    <span id="follow-text-{{ video.author.id }}" style="font-size: 13px; font-weight: bold; color: {{ '#888' if current_user.is_authenticated and current_user.is_following(video.author) else '#ff4b2b' }};">
+                        {% if current_user.is_authenticated and current_user.is_following(video.author) %}
+                            Abonné
+                        {% else %}
+                            S'abonner
+                        {% endif %}
                     </span>
                 </div>    
 
@@ -304,6 +308,39 @@
             }
         })
         .catch(err => console.error("Erreur commentaire :", err));
+    }
+
+    function toggleFollow(authorId) {
+        fetch(`/follow/${authorId}`, { method: 'POST' })
+        .then(response => {
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.status === 'success') {
+                // Sélectionne tous les boutons de cet auteur sur la page
+                const icon = document.getElementById(`follow-icon-${authorId}`);
+                const text = document.getElementById(`follow-text-${authorId}`);
+
+                if (data.action === 'followed') {
+                    if (icon) icon.innerText = '✅';
+                    if (text) {
+                        text.innerText = 'Abonné';
+                        text.style.color = '#888';
+                    }
+                } else {
+                    if (icon) icon.innerText = '👤';
+                    if (text) {
+                        text.innerText = "S'abonner";
+                        text.style.color = '#ff4b2b';
+                    }
+                }
+            }
+        })
+        .catch(err => console.error("Erreur follow :", err));
     }
 
     // Gestion du compteur de vues
