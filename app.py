@@ -2,6 +2,7 @@ import re
 import os
 from sqlalchemy import text
 from flask_migrate import Migrate
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
