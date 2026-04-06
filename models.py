@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
+from flask_login import UserMixin
 from sqlalchemy import Boolean
 
 # 1. On initialise l'objet db, MAIS sans l'attacher à l'application tout de suite.
