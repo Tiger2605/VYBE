@@ -28,7 +28,7 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     bio = db.Column(db.String(200), default="Salut, je suis sur VIBE AFRICA !")
-    profile_pic = db.Column(db.String(255), default='default_profile.png') # AJOUT : Photo de profil
+    profile_pic = db.Column(db.String(255), default='default_profile.png')
     google_id = db.Column(db.String(100), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True)
 
@@ -40,8 +40,22 @@ class User(db.Model):
         backref=db.backref('followers', lazy='dynamic'), lazy='dynamic'
     )
     
-    # AJOUT : Relation pour les favoris
     favorites = db.relationship('Favorite', backref='user', lazy='dynamic')
+
+    # --- FONCTIONS D'AIDE AJOUTÉES ---
+
+    def is_following(self, user):
+        """Vérifie si l'utilisateur suit déjà quelqu'un."""
+        return self.following.filter(followers.c.followed_id == user.id).count() > 0
+
+    def toggle_follow(self, user):
+        """Ajoute ou retire l'abonnement et retourne l'action effectuée."""
+        if self.is_following(user):
+            self.following.remove(user)
+            return 'unfollowed'
+        else:
+            self.following.append(user)
+            return 'followed'
 
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)

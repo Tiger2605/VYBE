@@ -161,6 +161,15 @@
                 <div class="action-link view-count-box">
                     👁️ <span id="view-count-{{ video.id }}">{{ video.views or 0 }}</span>
                 </div>
+            
+                <div class="action-link" onclick="toggleFollow('{{ video.author.id }}')" id="follow-container-{{ video.author.id }}" style="cursor: pointer;">
+                    <span id="follow-icon-{{ video.author.id }}">
+                       {{ '✅' if current_user.is_following(video.author) else '👤' }} 
+                    </span>
+                    <span id="follow-text-{{ video.author.id }}" style="font-size: 13px; font-weight: bold; color: {{ '#888' if current_user.is_following(video.author) else '#ff4b2b' }};">
+                        {{ 'Abonné' if current_user.is_following(video.author) else 'S\'abonner' }}
+                    </span>
+                </div>    
 
                 <div class="action-link" onclick="toggleFavorite('{{ video.id }}')" id="fav-container-{{ video.id }}" style="cursor: pointer; color: white;">
                     🔖 <span style="font-size: 14px;">Favoris</span>

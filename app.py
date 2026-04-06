@@ -397,6 +397,7 @@ def followers_list(username):
 
 # --- ROUTE : FAVORIS (Toggle) ---
 @app.route('/favorite/<int:video_id>', methods=['POST'])
+@login_required 
 def toggle_favorite(video_id):
     # 1. Vérifier si l'utilisateur est connecté
     if 'user_id' not in session:
@@ -427,6 +428,18 @@ def toggle_favorite(video_id):
         db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/follow/<int:author_id>', methods=['POST'])
+@login_required
+def toggle_follow(author_id):
+    author = User.query.get_or_404(author_id)
+    if current_user.id == author.id:
+        return jsonify({'status': 'error', 'message': 'Action impossible'})
+    
+    # Utilise la fonction qu'on a ajoutée au modèle
+    action = current_user.toggle_follow(author)
+    db.session.commit()
+    
+    return jsonify({'status': 'success', 'action': action})
 
 @app.route('/follow/<username>')
 def follow(username):
