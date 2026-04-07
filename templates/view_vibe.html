@@ -108,7 +108,10 @@
     }
 
     function toggleLike(videoId) {
-        fetch(`/like/${videoId}`, { method: 'POST' })
+        fetch(`/like/${videoId}`, { 
+            method: 'POST',
+            credentials: 'same-origin' 
+        })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
@@ -119,10 +122,19 @@
     }
 
     function toggleFavorite(videoId) {
-        fetch(`/favorite/${videoId}`, { method: 'POST' })
-        .then(response => response.json())
+        fetch(`/favorite/${videoId}`, { 
+            method: 'POST',
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.status === 'success') {
+            if (data && data.status === 'success') {
                 const text = document.getElementById(`fav-text-${videoId}`);
                 const container = document.getElementById(`fav-container-${videoId}`);
                 text.innerText = (data.action === 'added') ? "Enregistré" : "Favoris";
@@ -132,10 +144,19 @@
     }
 
     function toggleFollow(authorId) {
-        fetch(`/follow/${authorId}`, { method: 'POST' })
-        .then(response => response.json())
+        fetch(`/follow/${authorId}`, { 
+            method: 'POST',
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.status === 'success') {
+            if (data && data.status === 'success') {
                 const icon = document.getElementById(`follow-icon-${authorId}`);
                 const text = document.getElementById(`follow-text-${authorId}`);
                 if (data.action === 'followed') {
@@ -155,6 +176,7 @@
         fetch(`/add_comment/${videoId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify({ content: input.value })
         })
         .then(response => response.json())

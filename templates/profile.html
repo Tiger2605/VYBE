@@ -71,10 +71,13 @@
         margin: 5px; 
         font-size: 13px;
         transition: 0.2s;
+        border: none;
+        cursor: pointer;
     }
     .btn-profile:active { transform: scale(0.95); }
     
-    .btn-follow { background: #ff4b2b; color: white; border: none; }
+    .btn-follow { background: #ff4b2b; color: white; }
+    .btn-following { background: #333; color: #888; border: 1px solid #444; }
     .btn-friend { background: #3498db; color: white; border: none; }
     .btn-chat { background: #2ecc71; color: white; border: none; width: 90%; margin-top: 10px; }
     .btn-logout { background: transparent; color: #e74c3c; border: 1px solid #e74c3c; width: 90%; }
@@ -119,7 +122,7 @@
                 <span class="stats-label">Vibes</span>
             </div>
             <a href="{{ url_for('followers_list', username=user.username) }}" class="stats-item">
-                <span class="stats-num">{{ user.followers.count() if user.followers else 0 }}</span>
+                <span class="stats-num" id="follower-count">{{ user.followers.count() if user.followers else 0 }}</span>
                 <span class="stats-label">Abonnés</span>
             </a>
             <a href="{{ url_for('friends_list', username=user.username) }}" class="stats-item">
@@ -130,12 +133,10 @@
 
         {% if not is_own_profile %}
             <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-                <button onclick="toggleFollow({{ user.id }})" class="btn-profile btn-follow" id="follow-btn-{{ user.id }}">
-                    {% if current_user_obj and user in current_user_obj.following %} 
-                        ✓ Abonné 
-                    {% else %} 
-                        S'abonner 
-                    {% endif %}
+                <button onclick="toggleFollow('{{ user.id }}')" 
+                        class="btn-profile {% if user in current_user.following %}btn-following{% else %}btn-follow{% endif %}" 
+                        id="follow-btn-{{ user.id }}">
+                    {% if user in current_user.following %}✓ Abonné{% else %}S'abonner{% endif %}
                 </button>
 
                 {% if not friendship %}
@@ -144,9 +145,6 @@
                     </a>
                 {% else %}
                     <span class="btn-profile" style="background: #333; color: #888;">✅ Amis</span>
-                {% endif %}
-
-                {% if friendship %}
                     <a href="{{ url_for('chat', friend_id=user.id) }}" class="btn-profile btn-chat">
                         💬 Discuter en privé
                     </a>
@@ -160,13 +158,12 @@
             </div>
         {% endif %}
 
-        {# --- BLOC SERVICES & BOUTIQUES (STUDIO) --- #}
+        {# --- BLOC SERVICES & BOUTIQUES --- #}
         {% if user_businesses %}
             <div style="margin-top: 25px; text-align: left; border-top: 1px solid #333; padding-top: 15px;">
                 <p style="margin: 0 0 10px 0; font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">
                     Services & Boutiques
                 </p>
-                
                 {% for biz in user_businesses %}
                 <div style="background: #1a1a1a; padding: 12px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222;">
                     <div style="overflow: hidden;">
@@ -175,17 +172,10 @@
                         </span>
                         <span style="font-size: 10px; color: #ff4b2b;">{{ biz.category | capitalize }}</span>
                     </div>
-                    
                     {% if is_own_profile %}
-                        <a href="{{ url_for('business_dashboard', biz_id=biz.id) }}" 
-                           style="background: #333; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 11px; border: 1px solid #444; font-weight: bold;">
-                            Gérer 🛠
-                        </a>
+                        <a href="{{ url_for('business_dashboard', biz_id=biz.id) }}" class="btn-profile" style="background: #333; color: white; padding: 6px 12px; font-size: 11px;">Gérer 🛠</a>
                     {% else %}
-                        <a href="{{ url_for('explorer_category', category=biz.category) }}" 
-                           style="background: transparent; color: #ff4b2b; padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 11px; border: 1px solid #ff4b2b;">
-                            Visiter 👁️
-                        </a>
+                        <a href="{{ url_for('explorer_category', category=biz.category) }}" class="btn-profile" style="background: transparent; color: #ff4b2b; border: 1px solid #ff4b2b; padding: 5px 10px; font-size: 11px;">Visiter 👁️</a>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -197,7 +187,7 @@
                 </a>
             </div>
         {% endif %}
-    </div> {# Fin de la div profile-card #}
+    </div>
 
     <div class="profile-tabs">
         <button class="tab-btn active" onclick="switchTab(event, 'tab-vibes')">📍 Vibes</button>
@@ -219,9 +209,7 @@
                 </a>
             </div>
         {% else %}
-            <div style="grid-column: span 3; text-align: center; padding: 40px; color: #444;">
-                <p>Aucune publication pour le moment.</p>
-            </div>
+            <div style="grid-column: span 3; text-align: center; padding: 40px; color: #444;"><p>Aucune publication.</p></div>
         {% endfor %}
     </div>
 
@@ -229,14 +217,16 @@
         {% for vibe in liked_videos %}
             <div class="grid-item">
                 <a href="{{ url_for('view_vibe', vibe_id=vibe.id) }}">
-                    <img src="{{ vibe.filename if vibe.category == 'Photos' else '#' }}">
+                    {% if vibe.category == 'Photos' %}
+                        <img src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}">
+                    {% else %}
+                        <video src="{{ vibe.filename if vibe.filename.startswith('http') else url_for('static', filename='uploads/' + vibe.filename) }}" muted></video>
+                    {% endif %}
                     <span class="grid-badge">{{ '📸' if vibe.category == 'Photos' else '🎥' }}</span>
                 </a>
             </div>
         {% else %}
-            <div style="grid-column: span 3; text-align: center; padding: 40px; color: #444;">
-                <p>Aucun like à afficher.</p>
-            </div>
+            <div style="grid-column: span 3; text-align: center; padding: 40px; color: #444;"><p>Aucun like.</p></div>
         {% endfor %}
     </div>
 
@@ -254,10 +244,7 @@
                 </a>
             </div>
         {% else %}
-            <div style="grid-column: span 3; text-align: center; padding: 40px; color: #444;">
-                <p>Aucun favori enregistré. 🔖</p>
-                <a href="{{ url_for('dashboard') }}" style="color: #ff4b2b; text-decoration: none; font-size: 12px;">Parcourir le feed</a>
-            </div>
+            <div style="grid-column: span 3; text-align: center; padding: 40px; color: #444;"><p>Aucun favori. 🔖</p></div>
         {% endfor %}
     </div>
 
@@ -269,17 +256,41 @@
 <script>
     function switchTab(evt, tabId) {
         const contents = document.getElementsByClassName("tab-content");
-        for (let content of contents) {
-            content.classList.remove("active");
-        }
-
+        for (let content of contents) { content.classList.remove("active"); }
         const tabs = document.getElementsByClassName("tab-btn");
-        for (let tab of tabs) {
-            tab.classList.remove("active");
-        }
-
+        for (let tab of tabs) { tab.classList.remove("active"); }
         document.getElementById(tabId).classList.add("active");
         evt.currentTarget.classList.add("active");
+    }
+
+    function toggleFollow(authorId) {
+        fetch(`/follow/${authorId}`, { 
+            method: 'POST',
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.status === 'success') {
+                const btn = document.getElementById(`follow-btn-${authorId}`);
+                const countElem = document.getElementById('follower-count');
+                
+                if (data.action === 'followed') {
+                    btn.innerText = '✓ Abonné';
+                    btn.classList.replace('btn-follow', 'btn-following');
+                    if(countElem) countElem.innerText = parseInt(countElem.innerText) + 1;
+                } else {
+                    btn.innerText = "S'abonner";
+                    btn.classList.replace('btn-following', 'btn-follow');
+                    if(countElem) countElem.innerText = parseInt(countElem.innerText) - 1;
+                }
+            }
+        });
     }
 </script>
 {% endblock %}
