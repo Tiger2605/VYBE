@@ -61,8 +61,15 @@ app.config.update(
     MAIL_USE_TLS=True,
     MAIL_USERNAME=os.environ.get('MAIL_USER'),
     MAIL_PASSWORD=os.environ.get('MAIL_PASS'),
-    MAIL_DEFAULT_SENDER=os.environ.get('MAIL_USER')
+    MAIL_DEFAULT_SENDER=os.environ.get('MAIL_USER'),
+
+    # # Sécurité Session (doublon de sécurité)
+    SESSION_COOKIE_SECURE=True,    # Force l'envoi du cookie via HTTPS uniquement
+    SESSION_COOKIE_HTTPONLY=True,  # Protection contre les scripts malveillants
+    SESSION_COOKIE_SAMESITE='Lax', # Permet au cookie de survivre aux redirections (évite le 302 vers login)
+    PERMANENT_SESSION_LIFETIME=3600 # La session reste active 1 heure
 )
+
 mail = Mail(app)
 
 # --- CONFIGURATION CLOUDINARY ---
