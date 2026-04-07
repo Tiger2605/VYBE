@@ -16,6 +16,9 @@ from flask import jsonify
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import sys
+import logging
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 # 1. CRÉATION DE L'APPLICATION
 app = Flask(__name__)
@@ -457,55 +460,38 @@ from flask import jsonify
 from flask import jsonify, session, redirect, url_for, request
 
 @app.route('/follow/<int:author_id>', methods=['GET', 'POST'])
+@login_required  # Flask-Login s'occupe de vérifier si l'utilisateur est connecté
 def follow(author_id):
-    # --- ZONE DE DEBUG START ---
-    print(f"\n[DEBUG FOLLOW] --- Nouvelle tentative ---")
-    print(f"[DEBUG FOLLOW] Cible author_id : {author_id}")
-    print(f"[DEBUG FOLLOW] Méthode HTTP : {request.method}")
-    print(f"[DEBUG FOLLOW] Contenu Session : {dict(session)}") 
-    # ---------------------------
-
-    # 1. Vérification de la session
-    if 'user_id' not in session:
-        print("[DEBUG FOLLOW] ERREUR : 'user_id' absent de la session")
-        if request.method == 'POST' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'status': 'error', 'message': 'Non connecté'}), 401
-        return redirect(url_for('login'))
-        
-    # 2. Récupération des utilisateurs
-    user_to_follow = User.query.get_or_404(author_id)
-    me = User.query.get(session['user_id'])
+    # --- DEBUG ---
+    print(f"\n[DEBUG FOLLOW] Tentative par : {current_user.username} (ID: {current_user.id})")
+    print(f"[DEBUG FOLLOW] Cible ID : {author_id}")
     
-    print(f"[DEBUG FOLLOW] Connecté en tant que ID : {me.id if me else 'Inconnu'}")
-
+    user_to_follow = User.query.get_or_404(author_id)
+    
     # Sécurité : ne pas se suivre soi-même
-    if user_to_follow == me:
-        print(f"[DEBUG FOLLOW] Action annulée : l'utilisateur tente de se suivre lui-même")
+    if user_to_follow == current_user:
         if request.method == 'POST':
             return jsonify({'status': 'error', 'message': 'Action impossible'}), 400
         return redirect(url_for('profile', username=user_to_follow.username))
 
-    # 3. Logique Follow / Unfollow
-    if user_to_follow in me.following:
-        me.following.remove(user_to_follow)
+    # Logique Follow / Unfollow
+    if user_to_follow in current_user.following:
+        current_user.following.remove(user_to_follow)
         action = 'unfollowed'
     else:
-        me.following.append(user_to_follow)
+        current_user.following.append(user_to_follow)
         action = 'followed'
     
-    print(f"[DEBUG FOLLOW] Résultat : {action} effectué avec succès")
     db.session.commit()
+    print(f"[DEBUG FOLLOW] Succès : {action}")
 
-    # 4. Gestion de la réponse
     if request.method == 'POST' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        print("[DEBUG FOLLOW] Réponse envoyée au format JSON")
         return jsonify({
             'status': 'success',
             'action': action,
             'count': user_to_follow.followers.count()
         })
 
-    print("[DEBUG FOLLOW] Redirection classique (GET)")
     return redirect(request.referrer or url_for('profile', username=user_to_follow.username))
 
 @app.route('/add_friend/<int:receiver_id>')
