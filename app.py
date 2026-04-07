@@ -458,9 +458,16 @@ from flask import jsonify, session, redirect, url_for, request
 
 @app.route('/follow/<int:author_id>', methods=['GET', 'POST'])
 def follow(author_id):
+    # --- ZONE DE DEBUG START ---
+    print(f"\n[DEBUG FOLLOW] --- Nouvelle tentative ---")
+    print(f"[DEBUG FOLLOW] Cible author_id : {author_id}")
+    print(f"[DEBUG FOLLOW] Méthode HTTP : {request.method}")
+    print(f"[DEBUG FOLLOW] Contenu Session : {dict(session)}") 
+    # ---------------------------
+
     # 1. Vérification de la session
     if 'user_id' not in session:
-        # Si c'est du JS, on répond en JSON, sinon on redirige vers login
+        print("[DEBUG FOLLOW] ERREUR : 'user_id' absent de la session")
         if request.method == 'POST' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'status': 'error', 'message': 'Non connecté'}), 401
         return redirect(url_for('login'))
@@ -469,8 +476,11 @@ def follow(author_id):
     user_to_follow = User.query.get_or_404(author_id)
     me = User.query.get(session['user_id'])
     
+    print(f"[DEBUG FOLLOW] Connecté en tant que ID : {me.id if me else 'Inconnu'}")
+
     # Sécurité : ne pas se suivre soi-même
     if user_to_follow == me:
+        print(f"[DEBUG FOLLOW] Action annulée : l'utilisateur tente de se suivre lui-même")
         if request.method == 'POST':
             return jsonify({'status': 'error', 'message': 'Action impossible'}), 400
         return redirect(url_for('profile', username=user_to_follow.username))
@@ -483,18 +493,19 @@ def follow(author_id):
         me.following.append(user_to_follow)
         action = 'followed'
     
+    print(f"[DEBUG FOLLOW] Résultat : {action} effectué avec succès")
     db.session.commit()
 
-    # 4. Gestion de la réponse selon la méthode
-    # Si c'est du JavaScript (POST ou AJAX)
+    # 4. Gestion de la réponse
     if request.method == 'POST' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        print("[DEBUG FOLLOW] Réponse envoyée au format JSON")
         return jsonify({
             'status': 'success',
             'action': action,
             'count': user_to_follow.followers.count()
         })
 
-    # Si c'est un clic sur un lien <a> (GET)
+    print("[DEBUG FOLLOW] Redirection classique (GET)")
     return redirect(request.referrer or url_for('profile', username=user_to_follow.username))
 
 @app.route('/add_friend/<int:receiver_id>')
