@@ -2,7 +2,7 @@ import re
 import os
 from sqlalchemy import text
 from flask_migrate import Migrate
-from flask_login import LoginManager ,login_required, current_user
+from flask_login import LoginManager ,login_required, current_user, login_user
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, session, flash
@@ -165,29 +165,31 @@ def register():
     
     return render_template('register.html')
 
+from flask_login import login_user, current_user
+
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("10 per minute") # Augmenté légèrement pour éviter les blocages frustrants
+@limiter.limit("10 per minute")
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
-            # 1. Utilisation de Flask-Login (si installé) ou session Flask
-            session.permanent = True  # <--- CRUCIAL : Active la durée définie dans app.config
-            session['user_id'] = user.id 
-            session['username'] = user.username
+            # Utilisation de Flask-Login pour créer la session
+            login_user(user, remember=True)
+            session.permanent = True  
             
-            # 2. Gestion de la redirection 'next'
-            # Si l'utilisateur a été redirigé vers login à cause d'un clic (ex: follow)
+            # Récupère l'URL d'origine si l'utilisateur venait d'un bouton (ex: follow)
             next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
-            
+            if not next_page or not next_page.startswith('/'):
+                next_page = url_for('dashboard')
+            return redirect(next_page)
         else:
-            flash("Identifiants incorrects. Veuillez réessayer.", "error")
-            return redirect(url_for('login'))
+            flash("Identifiants incorrects.", "error")
             
     return render_template('login.html')
 
@@ -473,22 +475,17 @@ from flask import jsonify
 
 from flask import jsonify, session, redirect, url_for, request
 
-@app.route('/follow/<int:author_id>', methods=['GET', 'POST'])
-@login_required  # Flask-Login s'occupe de vérifier si l'utilisateur est connecté
+@app.route('/follow/<int:author_id>', methods=['POST']) # Priorité au POST pour la sécurité
+@login_required
 def follow(author_id):
-    # --- DEBUG ---
-    print(f"\n[DEBUG FOLLOW] Tentative par : {current_user.username} (ID: {current_user.id})")
-    print(f"[DEBUG FOLLOW] Cible ID : {author_id}")
-    
     user_to_follow = User.query.get_or_404(author_id)
     
-    # Sécurité : ne pas se suivre soi-même
     if user_to_follow == current_user:
-        if request.method == 'POST':
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'status': 'error', 'message': 'Action impossible'}), 400
         return redirect(url_for('profile', username=user_to_follow.username))
 
-    # Logique Follow / Unfollow
+    # Utilisation de la relation SQLAlchemy
     if user_to_follow in current_user.following:
         current_user.following.remove(user_to_follow)
         action = 'unfollowed'
@@ -496,16 +493,21 @@ def follow(author_id):
         current_user.following.append(user_to_follow)
         action = 'followed'
     
-    db.session.commit()
-    print(f"[DEBUG FOLLOW] Succès : {action}")
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': 'Erreur base de données'}), 500
 
-    if request.method == 'POST' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+    # Gestion de la réponse (AJAX vs Standard)
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
         return jsonify({
             'status': 'success',
             'action': action,
             'count': user_to_follow.followers.count()
         })
 
+    # Retour à la page précédente ou au profil
     return redirect(request.referrer or url_for('profile', username=user_to_follow.username))
 
 @app.route('/add_friend/<int:receiver_id>')

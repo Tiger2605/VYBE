@@ -22,7 +22,8 @@ group_members = db.Table('group_members',
 # ---------------------------------------------------------
 # MODÈLES DE DONNÉES
 # ---------------------------------------------------------
-class User(db.Model, UserMixin): # N'oublie pas UserMixin pour flask-login
+
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -32,19 +33,30 @@ class User(db.Model, UserMixin): # N'oublie pas UserMixin pour flask-login
     google_id = db.Column(db.String(100), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True)
 
-    # RELATION UNIQUE VERS LES FAVORIS (On garde celle-ci)
+    # Relations
     my_favorites = db.relationship('Favorite', back_populates='user_rel', lazy='dynamic', cascade='all, delete-orphan')
-
-    # Relation vers les vidéos postées
     videos = db.relationship('Video', backref='author', lazy=True) 
 
-    # Système de followers (Abonnements)
+    # Système de followers
     following = db.relationship(
         'User', secondary=followers,
         primaryjoin=(followers.c.follower_id == id),
         secondaryjoin=(followers.c.followed_id == id),
-        backref=db.backref('followers', lazy='dynamic'), lazy='dynamic'
+        backref=db.backref('followers', lazy='dynamic'), 
+        lazy='dynamic'
     )
+
+    # Méthodes pour simplifier les actions
+    def follow(self, user):
+        if not self.is_following(user):
+            self.following.append(user)
+
+    def unfollow(self, user):
+        if self.is_following(user):
+            self.following.remove(user)
+
+    def is_following(self, user):
+        return self.following.filter(followers.c.followed_id == user.id).count() > 0
     
     # --- J'AI SUPPRIMÉ LA LIGNE "favorites =" ICI POUR ÉVITER LE CONFLIT ---
 
