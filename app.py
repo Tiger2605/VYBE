@@ -23,12 +23,6 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 # 1. CRÉATION DE L'APPLICATION
 app = Flask(__name__)
 
-# -- CONFIGURATION DE LOGIN MANAGER (Flask-Login) ---
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
 # 2. CONFIGURATION DE LA CLÉ SECRÈTE
 app.secret_key = os.environ.get('SECRET_KEY', 'vybe_africa_secret_key_2026')
 
@@ -71,6 +65,12 @@ app.config.update(
 )
 
 mail = Mail(app)
+
+# -- CONFIGURATION DE LOGIN MANAGER (Flask-Login) ---
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 # --- CONFIGURATION CLOUDINARY ---
 cloudinary.config(
@@ -166,7 +166,7 @@ def register():
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute") # Augmenté légèrement pour éviter les blocages frustrants
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -175,9 +175,16 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
+            # 1. Utilisation de Flask-Login (si installé) ou session Flask
+            session.permanent = True  # <--- CRUCIAL : Active la durée définie dans app.config
             session['user_id'] = user.id 
             session['username'] = user.username
-            return redirect(url_for('dashboard'))
+            
+            # 2. Gestion de la redirection 'next'
+            # Si l'utilisateur a été redirigé vers login à cause d'un clic (ex: follow)
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+            
         else:
             flash("Identifiants incorrects. Veuillez réessayer.", "error")
             return redirect(url_for('login'))
