@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager ,login_required, current_user, login_user
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from models import Business, Product, db, User, Group, GroupMessage, Like, Comment, FriendRequest, Video,Favorite, Message as MessageModel, AppUpdate
 from flask_limiter import Limiter
@@ -25,6 +26,8 @@ app = Flask(__name__)
 
 # 2. CONFIGURATION DE LA CLÉ SECRÈTE
 app.secret_key = os.environ.get('SECRET_KEY', 'vybe_africa_secret_key_2026')
+# Indispensable pour stabiliser les sessions sur Render
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # --- CONFIGURATION DE LA BASE DE DONNÉES ---
 database_url = os.environ.get('DATABASE_URL')
@@ -204,7 +207,7 @@ def forgot_password():
         user = User.query.filter_by(email=email).first()
         if user:
             token = s.dumps(user.id, salt='password-reset')
-            msg = Message("Réinitialisation du mot de passe",
+            msg = MailMessage("Réinitialisation du mot de passe",
                           sender=app.config['MAIL_USERNAME'],
                           recipients=[user.email])
             msg.body = f"Bonjour {user.username},\n\nCliquez sur le lien suivant pour réinitialiser votre mot de passe :\n{url_for('reset_password', token=token, _external=True)}"
@@ -234,6 +237,7 @@ def reset_password(token):
     return render_template('reset_password_form.html')
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     # 1. Vérification de la session
     if 'username' not in session:
@@ -285,7 +289,9 @@ def dashboard():
     )
 
 @app.route('/logout')
+@login_required
 def logout():
+    logout_user() # Déconnexion officielle
     session.clear()
     flash("Vous avez été déconnecté.", "success")
     return redirect(url_for('login'))
@@ -458,18 +464,6 @@ def toggle_favorite(video_id):
         db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/follow/<int:author_id>', methods=['POST'])
-@login_required
-def toggle_follow(author_id):
-    author = User.query.get_or_404(author_id)
-    if current_user.id == author.id:
-        return jsonify({'status': 'error', 'message': 'Action impossible'})
-    
-    # Utilise la fonction qu'on a ajoutée au modèle
-    action = current_user.toggle_follow(author)
-    db.session.commit()
-    
-    return jsonify({'status': 'success', 'action': action})
 
 from flask import jsonify
 
