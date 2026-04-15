@@ -27,20 +27,19 @@
         border-radius: 24px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
         width: 100%;
-        max-width: 800px;
+        max-width: 900px; /* Légèrement plus large pour les nouveaux champs */
         border: 1px solid var(--border-color);
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1.2fr 1.8fr;
         gap: 30px;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 850px) {
         .studio-card { grid-template-columns: 1fr; }
     }
 
     .studio-header {
         grid-column: 1 / -1;
-        text-align: left;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 15px;
         margin-bottom: 10px;
@@ -65,8 +64,9 @@
         align-items: center;
         position: relative;
         overflow: hidden;
-        min-height: 300px;
+        min-height: 400px;
         transition: 0.3s;
+        cursor: pointer;
     }
 
     .preview-zone.dragover {
@@ -77,15 +77,15 @@
     #preview-container img, #preview-container video {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         border-radius: 12px;
     }
 
     /* Formulaire */
-    .form-zone { display: flex; flex-direction: column; gap: 15px; }
+    .form-zone { display: flex; flex-direction: column; gap: 18px; }
 
-    .input-group { display: flex; flex-direction: column; gap: 5px; }
-    .input-group label { color: #888; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
     .input-field {
         background: #1a1a1a;
@@ -93,96 +93,114 @@
         padding: 12px 15px;
         border-radius: 10px;
         color: white;
-        font-size: 15px;
+        font-size: 14px;
         transition: 0.3s;
     }
 
     .input-field:focus {
         border-color: var(--primary-color);
         outline: none;
-        box-shadow: 0 0 0 2px rgba(255, 75, 43, 0.2);
+        box-shadow: 0 0 0 2px rgba(255, 75, 43, 0.1);
     }
+
+    textarea.input-field {
+        resize: none;
+        min-height: 100px;
+        line-height: 1.5;
+    }
+
+    .tag-input-wrapper {
+        display: flex;
+        align-items: center;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 10px;
+        padding-left: 10px;
+    }
+    .tag-prefix { color: var(--primary-color); font-weight: bold; }
+    .tag-input-wrapper .input-field { border: none; width: 100%; }
 
     .btn-publish {
         background: linear-gradient(to right, #ff4b2b, #ff416c);
         color: white;
         border: none;
-        padding: 15px;
+        padding: 16px;
         border-radius: 12px;
         font-weight: bold;
         font-size: 16px;
         cursor: pointer;
-        margin-top: 10px;
-        transition: 0.3s transform;
+        margin-top: 5px;
+        transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    .btn-publish:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4); }
+    .btn-publish:hover { transform: scale(1.02); box-shadow: 0 10px 20px rgba(255, 75, 43, 0.3); }
 
     /* Barre de progression */
-    .progress-container {
-        display: none;
-        margin-top: 15px;
-    }
-    .progress-bar {
-        height: 6px;
-        background: #333;
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .progress-fill {
-        height: 100%;
-        background: var(--primary-color);
-        width: 0%;
-        transition: 0.4s;
-    }
+    .progress-container { display: none; margin-top: 10px; }
+    .progress-bar { height: 4px; background: #333; border-radius: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--primary-color); width: 0%; transition: 0.4s; }
 </style>
 
 <div class="upload-wrapper">
     <div class="studio-card">
         <div class="studio-header">
-            <h1>VYBE STUDIO 🎥</h1>
-            <p style="color: #666; font-size: 13px;">Partagez votre contenu avec l'Afrique</p>
+            <h1>STUDIO VYBE 🌍</h1>
+            <p style="color: #666; font-size: 13px; margin: 5px 0 0 0;">Créez du contenu qui inspire l'Afrique</p>
         </div>
 
         <div class="preview-zone" id="drop-zone" onclick="document.getElementById('file-field').click();">
             <div id="preview-placeholder">
-                <div style="font-size: 40px; margin-bottom: 10px;">☁️</div>
-                <p style="color: #bbb; margin: 0; font-weight: 500;">Glissez votre média ici</p>
-                <p style="color: #666; font-size: 12px;">ou cliquez pour parcourir</p>
+                <div style="font-size: 45px; margin-bottom: 15px;">🚀</div>
+                <p style="color: #eee; margin: 0; font-weight: 600;">Sélectionnez un média</p>
+                <p style="color: #666; font-size: 12px;">Glisser-déposer ou cliquer</p>
             </div>
-            <div id="preview-container" style="display: none; width: 100%; height: 100%;">
-                </div>
+            <div id="preview-container" style="display: none; width: 100%; height: 100%;"></div>
         </div>
 
         <form class="form-zone" id="upload-form" method="POST" enctype="multipart/form-data">
             <div class="input-group">
-                <label>Légende de la Vibe</label>
-                <input type="text" name="title" class="input-field" placeholder="Dites quelque chose..." required>
+                <label>Titre / Légende courte</label>
+                <input type="text" name="title" class="input-field" placeholder="Un titre accrocheur..." required>
             </div>
 
             <div class="input-group">
-                <label>Catégorie</label>
-                <select name="category" class="input-field" required>
-                    <option value="" disabled selected>Choisir...</option>
-                    <option value="Infos">📰 Infos</option>
-                    <option value="Hot">🔥 Hot</option>
-                    <option value="Photos">📸 Photos</option>
-                    <option value="Tech">💻 Technologie</option>
-                    <option value="Education">📚 Éducation</option>
-                </select>
+                <label>Description détaillée</label>
+                <textarea name="description" class="input-field" placeholder="Racontez-nous en plus sur cette Vibe..."></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-group">
+                    <label>Catégorie</label>
+                    <select name="category" class="input-field" required>
+                        <option value="" disabled selected>Choisir...</option>
+                        <option value="Infos">📰 Infos</option>
+                        <option value="Hot">🔥 Hot</option>
+                        <option value="Photos">📸 Photos</option>
+                        <option value="Tech">💻 Technologie</option>
+                        <option value="Education">📚 Éducation</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Tags</label>
+                    <div class="tag-input-wrapper">
+                        <span class="tag-prefix">#</span>
+                        <input type="text" name="tags" class="input-field" placeholder="afrique, vibe, buzz">
+                    </div>
+                </div>
             </div>
 
             <input type="file" id="file-field" name="file" accept="video/*,image/*" required style="display: none;" onchange="handleFiles(this.files)">
 
             <div class="progress-container" id="prog-container">
-                <p style="font-size: 11px; color: #ff4b2b; margin-bottom: 5px;" id="prog-text">Envoi en cours... 0%</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="prog-fill"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <p style="font-size: 11px; color: #ff4b2b; margin: 0;" id="prog-text">Préparation de l'envoi...</p>
+                    <span id="prog-perc" style="font-size: 11px; color: #888;">0%</span>
                 </div>
+                <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
             </div>
 
-            <button type="submit" class="btn-publish" id="submit-btn">Diffuser la Vibe</button>
-            <a href="{{ url_for('dashboard') }}" style="text-align: center; color: #666; font-size: 13px; text-decoration: none; margin-top: 5px;">Plus tard</a>
+            <button type="submit" class="btn-publish" id="submit-btn">Publier maintenant</button>
+            <a href="{{ url_for('dashboard') }}" style="text-align: center; color: #555; font-size: 13px; text-decoration: none;">Annuler</a>
         </form>
     </div>
 </div>
@@ -193,26 +211,14 @@
     const previewContainer = document.getElementById('preview-container');
     const previewPlaceholder = document.getElementById('preview-placeholder');
 
-    // Gestion du Drag & Drop
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults (e) { e.preventDefault(); e.stopPropagation(); }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
-    });
+    // Drag & Drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, (ev) => { ev.preventDefault(); ev.stopPropagation(); }));
+    ['dragenter', 'dragover'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.add('dragover')));
+    ['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.remove('dragover')));
 
     dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        fileInput.files = files;
-        handleFiles(files);
+        fileInput.files = e.dataTransfer.files;
+        handleFiles(e.dataTransfer.files);
     });
 
     function handleFiles(files) {
@@ -221,43 +227,36 @@
             previewPlaceholder.style.display = 'none';
             previewContainer.style.display = 'block';
             previewContainer.innerHTML = '';
-
             const reader = new FileReader();
             reader.onload = (e) => {
-                if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    previewContainer.appendChild(img);
-                } else if (file.type.startsWith('video/')) {
-                    const video = document.createElement('video');
-                    video.src = e.target.result;
-                    video.controls = true;
-                    previewContainer.appendChild(video);
-                }
+                const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
+                if (file.type.startsWith('video/')) el.controls = true;
+                el.src = e.target.result;
+                previewContainer.appendChild(el);
             };
             reader.readAsDataURL(file);
         }
     }
 
-    // Animation de progression lors du clic sur Envoyer
     document.getElementById('upload-form').onsubmit = function() {
         document.getElementById('prog-container').style.display = 'block';
-        document.getElementById('submit-btn').disabled = true;
-        document.getElementById('submit-btn').innerText = "Traitement...";
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.style.opacity = "0.7";
+        btn.innerText = "Téléchargement...";
         
-        let width = 0;
-        const fill = document.getElementById('prog-fill');
-        const text = document.getElementById('prog-text');
-        
+        let w = 0;
         const interval = setInterval(() => {
-            if (width >= 95) {
-                clearInterval(interval);
-            } else {
-                width++;
-                fill.style.width = width + '%';
-                text.innerText = "Optimisation du média... " + width + "%";
+            if (w >= 98) clearInterval(interval);
+            else {
+                w += Math.floor(Math.random() * 3) + 1;
+                if(w > 98) w = 98;
+                document.getElementById('prog-fill').style.width = w + '%';
+                document.getElementById('prog-perc').innerText = w + '%';
+                if(w > 80) document.getElementById('prog-text').innerText = "Finalisation sur Cloudinary...";
+                else document.getElementById('prog-text').innerText = "Envoi du média...";
             }
-        }, 100);
+        }, 150);
     };
 </script>
 {% endblock %}

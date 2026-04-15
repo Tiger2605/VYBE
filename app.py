@@ -549,10 +549,12 @@ def upload_video():
                 file_url = upload_result['secure_url']
                 
                 new_video = Video(
-                    title=title, 
+                    title=title,
+                    description=request.form.get('description'),
+                    tags=request.form.get('tags'),
                     filename=file_url,
                     user_id=current_user.id, 
-                    category=category
+                    category=request.form.get('category')
                 )
                 
                 db.session.add(new_video)
