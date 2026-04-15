@@ -9,6 +9,7 @@
         --secondary-color: #3498db;
         --glass-bg: rgba(34, 34, 34, 0.9);
         --border-color: rgba(255, 255, 255, 0.1);
+        --accent-green: #2ecc71;
     }
 
     .upload-wrapper {
@@ -22,19 +23,19 @@
 
     .studio-card {
         background: var(--glass-bg);
-        backdrop-filter: blur(10px);
-        padding: 40px;
+        backdrop-filter: blur(15px);
+        padding: 30px;
         border-radius: 24px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
         width: 100%;
-        max-width: 900px; /* Légèrement plus large pour les nouveaux champs */
+        max-width: 1000px;
         border: 1px solid var(--border-color);
         display: grid;
-        grid-template-columns: 1.2fr 1.8fr;
-        gap: 30px;
+        grid-template-columns: 1.3fr 1.7fr;
+        gap: 25px;
     }
 
-    @media (max-width: 850px) {
+    @media (max-width: 900px) {
         .studio-card { grid-template-columns: 1fr; }
     }
 
@@ -42,220 +43,284 @@
         grid-column: 1 / -1;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 15px;
-        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .studio-header h1 {
-        font-size: 24px;
+        font-size: 22px;
         background: linear-gradient(to right, #ff4b2b, #ff416c);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin: 0;
     }
 
-    /* Zone de Prévisualisation */
-    .preview-zone {
-        background: #111;
-        border-radius: 16px;
-        border: 2px dashed #333;
+    /* ZONE DE PREVISUALISATION (Gaucher) */
+    .preview-section {
         display: flex;
         flex-direction: column;
+        gap: 15px;
+    }
+
+    .main-preview-zone {
+        background: #000;
+        border-radius: 16px;
+        border: 2px dashed #333;
+        height: 450px;
+        display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
         overflow: hidden;
-        min-height: 400px;
-        transition: 0.3s;
         cursor: pointer;
+        transition: 0.3s;
     }
 
-    .preview-zone.dragover {
-        border-color: var(--primary-color);
-        background: rgba(255, 75, 43, 0.05);
-    }
+    .main-preview-zone:hover { border-color: var(--primary-color); }
 
     #preview-container img, #preview-container video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 12px;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 8px;
     }
 
-    /* Formulaire */
-    .form-zone { display: flex; flex-direction: column; gap: 18px; }
+    /* TIMELINE DE MIXAGE */
+    .timeline-wrapper {
+        background: rgba(0,0,0,0.3);
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid #222;
+    }
 
-    .input-group { display: flex; flex-direction: column; gap: 6px; }
-    .input-group label { color: #888; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .timeline-items {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+
+    .media-thumb {
+        min-width: 60px;
+        height: 60px;
+        background: #222;
+        border-radius: 8px;
+        border: 1px solid #444;
+        object-fit: cover;
+    }
+
+    /* FORMULAIRE (Droite) */
+    .form-zone { display: flex; flex-direction: column; gap: 15px; }
+
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+    .input-group label { color: #888; font-size: 11px; font-weight: bold; text-transform: uppercase; }
 
     .input-field {
         background: #1a1a1a;
         border: 1px solid #333;
-        padding: 12px 15px;
+        padding: 12px;
         border-radius: 10px;
         color: white;
         font-size: 14px;
         transition: 0.3s;
     }
 
-    .input-field:focus {
-        border-color: var(--primary-color);
-        outline: none;
-        box-shadow: 0 0 0 2px rgba(255, 75, 43, 0.1);
+    .input-field:focus { border-color: var(--primary-color); outline: none; }
+
+    /* OUTILS CREATEURS */
+    .creator-tools {
+        background: #111;
+        padding: 15px;
+        border-radius: 15px;
+        border: 1px solid #222;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
     }
 
-    textarea.input-field {
-        resize: none;
-        min-height: 100px;
-        line-height: 1.5;
-    }
-
-    .tag-input-wrapper {
-        display: flex;
-        align-items: center;
-        background: #1a1a1a;
-        border: 1px solid #333;
-        border-radius: 10px;
-        padding-left: 10px;
-    }
-    .tag-prefix { color: var(--primary-color); font-weight: bold; }
-    .tag-input-wrapper .input-field { border: none; width: 100%; }
+    .tool-item { display: flex; flex-direction: column; gap: 5px; }
+    .tool-item label { font-size: 11px; color: var(--secondary-color); }
 
     .btn-publish {
         background: linear-gradient(to right, #ff4b2b, #ff416c);
-        color: white;
-        border: none;
         padding: 16px;
         border-radius: 12px;
+        border: none;
+        color: white;
         font-weight: bold;
         font-size: 16px;
         cursor: pointer;
-        margin-top: 5px;
-        transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: 0.3s;
+        margin-top: 10px;
     }
 
-    .btn-publish:hover { transform: scale(1.02); box-shadow: 0 10px 20px rgba(255, 75, 43, 0.3); }
+    .btn-publish:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4); }
 
-    /* Barre de progression */
     .progress-container { display: none; margin-top: 10px; }
-    .progress-bar { height: 4px; background: #333; border-radius: 10px; overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--primary-color); width: 0%; transition: 0.4s; }
+    .progress-bar { height: 6px; background: #222; border-radius: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--primary-color); width: 0%; transition: 0.3s; }
 </style>
 
 <div class="upload-wrapper">
     <div class="studio-card">
         <div class="studio-header">
             <h1>STUDIO VYBE 🌍</h1>
-            <p style="color: #666; font-size: 13px; margin: 5px 0 0 0;">Créez du contenu qui inspire l'Afrique</p>
+            <span style="color: #444; font-size: 12px; font-weight: bold;">MODE CRÉATEUR PRO</span>
         </div>
 
-        <div class="preview-zone" id="drop-zone" onclick="document.getElementById('file-field').click();">
-            <div id="preview-placeholder">
-                <div style="font-size: 45px; margin-bottom: 15px;">🚀</div>
-                <p style="color: #eee; margin: 0; font-weight: 600;">Sélectionnez un média</p>
-                <p style="color: #666; font-size: 12px;">Glisser-déposer ou cliquer</p>
+        <div class="preview-section">
+            <div class="main-preview-zone" id="drop-zone" onclick="document.getElementById('file-field').click()">
+                <div id="preview-placeholder" style="text-align: center;">
+                    <p style="font-size: 40px; margin: 0;">🎬</p>
+                    <p style="color: #666; font-size: 13px;">Glisser ou cliquer pour ajouter</p>
+                </div>
+                <div id="preview-container" style="display:none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"></div>
             </div>
-            <div id="preview-container" style="display: none; width: 100%; height: 100%;"></div>
+
+            <div class="timeline-wrapper">
+                <label style="color: #555; font-size: 10px; font-weight: bold; display: block; margin-bottom: 8px;">FILE D'ATTENTE / MIXAGE</label>
+                <div class="timeline-items" id="timeline">
+                    </div>
+            </div>
         </div>
 
         <form class="form-zone" id="upload-form" method="POST" enctype="multipart/form-data">
+            <input type="file" id="file-field" name="file" accept="video/*,image/*" hidden onchange="handleFiles(this.files)">
+
             <div class="input-group">
-                <label>Titre / Légende courte</label>
-                <input type="text" name="title" class="input-field" placeholder="Un titre accrocheur..." required>
+                <label>Titre de la Vibe</label>
+                <input type="text" name="title" id="vibe-title" class="input-field" placeholder="Ex: Mon voyage à Goma..." required>
             </div>
 
             <div class="input-group">
-                <label>Description détaillée</label>
-                <textarea name="description" class="input-field" placeholder="Racontez-nous en plus sur cette Vibe..."></textarea>
+                <div style="display: flex; justify-content: space-between;">
+                    <label>Description</label>
+                    <span id="char-count" style="font-size: 10px; color: #555;">0 / 200</span>
+                </div>
+                <textarea name="description" id="vibe-desc" class="input-field" placeholder="Partagez l'histoire de cette vibe..." maxlength="200"></textarea>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="input-group">
                     <label>Catégorie</label>
-                    <select name="category" class="input-field" required>
-                        <option value="" disabled selected>Choisir...</option>
+                    <select name="category" class="input-field">
                         <option value="Infos">📰 Infos</option>
-                        <option value="Hot">🔥 Hot</option>
-                        <option value="Photos">📸 Photos</option>
+                        <option value="Hot" selected>🔥 Hot</option>
                         <option value="Tech">💻 Technologie</option>
                         <option value="Education">📚 Éducation</option>
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>Tags</label>
-                    <div class="tag-input-wrapper">
-                        <span class="tag-prefix">#</span>
-                        <input type="text" name="tags" class="input-field" placeholder="afrique, vibe, buzz">
+                    <label>Tags suggérés</label>
+                    <input type="text" name="tags" id="vibe-tags" class="input-field" placeholder="#vibe, #africa">
+                </div>
+            </div>
+
+            <div class="creator-tools">
+                <div class="tool-item">
+                    <label>Option Audio</label>
+                    <div style="display: flex; align-items: center; gap: 10px; color: #ccc; font-size: 13px;">
+                        <input type="checkbox" id="mute-toggle" name="is_muted"> Muet
                     </div>
                 </div>
-            </div>
-
-            <input type="file" id="file-field" name="file" accept="video/*,image/*" required style="display: none;" onchange="handleFiles(this.files)">
-
-            <div class="progress-container" id="prog-container">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <p style="font-size: 11px; color: #ff4b2b; margin: 0;" id="prog-text">Préparation de l'envoi...</p>
-                    <span id="prog-perc" style="font-size: 11px; color: #888;">0%</span>
+                <div class="tool-item">
+                    <label>Image de Couverture</label>
+                    <input type="file" name="cover" accept="image/*" class="input-field" style="padding: 5px; font-size: 10px;">
                 </div>
-                <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+                <div class="tool-item" style="grid-column: 1 / -1;">
+                    <label>Rognage / Trim (Durée estimée)</label>
+                    <input type="range" class="range-input" style="width: 100%;">
+                </div>
             </div>
 
-            <button type="submit" class="btn-publish" id="submit-btn">Publier maintenant</button>
-            <a href="{{ url_for('dashboard') }}" style="text-align: center; color: #555; font-size: 13px; text-decoration: none;">Annuler</a>
+            <div class="progress-container" id="prog">
+                <p id="prog-status" style="font-size: 10px; color: var(--primary-color); margin-bottom: 5px;">Envoi vers le Cloud...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="fill"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-publish" id="submit-btn">Diffuser sur Vybe App 🚀</button>
+            <a href="{{ url_for('dashboard') }}" style="text-align: center; color: #444; font-size: 12px; text-decoration: none;">Annuler et quitter</a>
         </form>
     </div>
 </div>
 
 <script>
-    const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-field');
     const previewContainer = document.getElementById('preview-container');
-    const previewPlaceholder = document.getElementById('preview-placeholder');
-
-    // Drag & Drop
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, (ev) => { ev.preventDefault(); ev.stopPropagation(); }));
-    ['dragenter', 'dragover'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.add('dragover')));
-    ['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.remove('dragover')));
-
-    dropZone.addEventListener('drop', (e) => {
-        fileInput.files = e.dataTransfer.files;
-        handleFiles(e.dataTransfer.files);
-    });
+    const placeholder = document.getElementById('preview-placeholder');
+    const timeline = document.getElementById('timeline');
 
     function handleFiles(files) {
-        if (files.length > 0) {
-            const file = files[0];
-            previewPlaceholder.style.display = 'none';
-            previewContainer.style.display = 'block';
-            previewContainer.innerHTML = '';
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const el = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
-                if (file.type.startsWith('video/')) el.controls = true;
-                el.src = e.target.result;
-                previewContainer.appendChild(el);
-            };
-            reader.readAsDataURL(file);
-        }
+        const file = files[0];
+        if (!file) return;
+
+        // Cacher le placeholder et montrer le container
+        placeholder.style.display = 'none';
+        previewContainer.style.display = 'flex';
+        previewContainer.innerHTML = '';
+
+        const reader = new FileReader();
+        reader.onload = e => {
+            const isVideo = file.type.startsWith('video/');
+            const el = isVideo ? document.createElement('video') : document.createElement('img');
+            
+            el.src = e.target.result;
+            if (isVideo) {
+                el.controls = true;
+                el.style.maxHeight = "400px";
+                document.getElementById('mute-toggle').onchange = (ev) => { el.muted = ev.target.checked; };
+            }
+            previewContainer.appendChild(el);
+
+            // Ajouter à la timeline
+            const thumb = document.createElement('img');
+            thumb.src = isVideo ? "/static/video-icon.png" : e.target.result; // Utilise une icône si vidéo, sinon l'image
+            thumb.className = "media-thumb";
+            if(isVideo) thumb.style.border = "1px solid #ff4b2b";
+            timeline.prepend(thumb);
+        };
+        reader.readAsDataURL(file);
     }
 
+    // Gestion du compteur de caractères
+    const desc = document.getElementById('vibe-desc');
+    const counter = document.getElementById('char-count');
+    desc.addEventListener('input', () => {
+        counter.innerText = desc.value.length + " / 200";
+        counter.style.color = desc.value.length > 180 ? "#ff4b2b" : "#555";
+    });
+
+    // Auto-hashtags intelligent
+    const titleInput = document.getElementById('vibe-title');
+    const tagsInput = document.getElementById('vibe-tags');
+    titleInput.addEventListener('input', () => {
+        let val = titleInput.value.toLowerCase();
+        let suggestions = [];
+        if (val.includes('news') || val.includes('info')) suggestions.push('actu');
+        if (val.includes('congo') || val.includes('kin')) suggestions.push('rdc');
+        if (val.includes('musique') || val.includes('danse')) suggestions.push('vibe');
+        if (val.length > 3) suggestions.push('viral');
+        
+        tagsInput.value = suggestions.map(s => '#' + s).join(' ');
+    });
+
+    // Gestion de l'upload (Fake progress pour l'UX)
     document.getElementById('upload-form').onsubmit = function() {
-        document.getElementById('prog-container').style.display = 'block';
-        const btn = document.getElementById('submit-btn');
-        btn.disabled = true;
-        btn.style.opacity = "0.7";
-        btn.innerText = "Téléchargement...";
+        document.getElementById('prog').style.display = 'block';
+        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('submit-btn').innerText = "Vibration en cours...";
         
         let w = 0;
-        const interval = setInterval(() => {
+        let interval = setInterval(() => {
             if (w >= 98) clearInterval(interval);
-            else {
-                w += Math.floor(Math.random() * 3) + 1;
-                if(w > 98) w = 98;
-                document.getElementById('prog-fill').style.width = w + '%';
-                document.getElementById('prog-perc').innerText = w + '%';
-                if(w > 80) document.getElementById('prog-text').innerText = "Finalisation sur Cloudinary...";
-                else document.getElementById('prog-text').innerText = "Envoi du média...";
-            }
+            w += Math.floor(Math.random() * 5);
+            if(w > 98) w = 98;
+            document.getElementById('fill').style.width = w + '%';
+            
+            if(w > 85) document.getElementById('prog-status').innerText = "Finalisation sur Cloudinary...";
+            else if(w > 40) document.getElementById('prog-status').innerText = "Traitement du média...";
         }, 150);
     };
 </script>
