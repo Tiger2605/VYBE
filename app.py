@@ -328,18 +328,18 @@ def explorer():
 def profile(username=None):
     # 1. Gestion des accès (Redirection si pas de username et pas connecté)
     if username is None:
-        if 'user_id' not in session:
+        if not current_user.is_authenticated:
             return render_template('profile_guest.html')
-        username = session['username']
+        username = current_user.username
     
     # 2. Récupération de l'utilisateur cible
     user = User.query.filter_by(username=username).first_or_404()
     
     # 3. Vérification : est-ce mon propre profil ?
-    is_own_profile = False
     me = None
+    is_own_profile = False
     if current_user.is_authenticated:
-        me = User.query.get(session['user_id'])
+        me = current_user
         is_own_profile = (me.id == user.id)
 
     # 4. Récupération des données pour les onglets
@@ -386,10 +386,10 @@ def profile(username=None):
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
     
-    user = User.query.get(session['user_id'])
+    user = User.query.get(current_user.id)
     
     if request.method == 'POST':
         user.username = request.form.get('username')
