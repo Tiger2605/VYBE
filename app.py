@@ -435,21 +435,14 @@ def followers_list(username):
 @app.route('/favorite/<int:video_id>', methods=['POST'])
 @login_required 
 def toggle_favorite(video_id):
-    # 1. Vérifier si l'utilisateur est connecté
-    if 'user_id' not in session:
-        return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
-    
     user_id = current_user.id
     
-    # 2. Chercher si ce favori existe déjà
     existing_fav = Favorite.query.filter_by(user_id=user_id, video_id=video_id).first()
     
     if existing_fav:
-        # Si il existe, on le retire
         db.session.delete(existing_fav)
         action = "removed"
     else:
-        # Si il n'existe pas, on l'ajoute
         new_fav = Favorite(user_id=user_id, video_id=video_id)
         db.session.add(new_fav)
         action = "added"
@@ -506,10 +499,10 @@ def follow(author_id):
 
 @app.route('/add_friend/<int:receiver_id>')
 def add_friend(receiver_id):
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
         
-    sender_id = session['user_id']
+    sender_id = current_user.id
     existing_request = FriendRequest.query.filter_by(sender_id=sender_id, receiver_id=receiver_id).first()
     
     if not existing_request and sender_id != receiver_id:
@@ -524,7 +517,7 @@ def add_friend(receiver_id):
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_video():
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
         
     if request.method == 'POST':
@@ -563,7 +556,7 @@ def upload_video():
 
 @app.route('/like/<int:video_id>', methods=['POST']) # On passe en POST pour plus de sécurité
 def like_video(video_id):
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
         
     existing_like = Like.query.filter_by(user_id=session['user_id'], video_id=video_id).first()
@@ -588,11 +581,11 @@ def like_video(video_id):
     
 @app.route('/my_favorites')
 def my_favorites():
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
     
     # On récupère les IDs des vidéos que l'utilisateur a mis en favoris
-    user_id = session['user_id']
+    user_id = current_user.id
     user_favs = Favorite.query.filter_by(user_id=user_id).all()
     
     # On extrait les objets "Video" de ces favoris
@@ -602,7 +595,8 @@ def my_favorites():
 
 @app.route('/add_comment/<int:video_id>', methods=['POST'])
 def add_comment(video_id):
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
+        return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
         return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
     
     # On gère les deux cas : soit les données viennent d'un formulaire classique, soit du JSON (AJAX)
@@ -660,11 +654,11 @@ def view_vibe(vibe_id):
 
 @app.route('/accept_friend/<int:request_id>')
 def accept_friend(request_id):
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
         
     friend_req = FriendRequest.query.get_or_404(request_id)
-    if friend_req.receiver_id == session['user_id']:
+    if friend_req.receiver_id == current_user.id:
         friend_req.status = 'accepted'
         db.session.commit()
         flash("Demande acceptée ! Vous êtes maintenant amis. 🤝", "success")
@@ -675,10 +669,10 @@ def accept_friend(request_id):
 
 @app.route('/chat/<int:friend_id>', methods=['GET', 'POST'])
 def chat(friend_id):
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
         
-    me_id = session['user_id']
+    me_id = current_user.id
     friend = User.query.get_or_404(friend_id)
     
     is_friend = FriendRequest.query.filter(
@@ -706,11 +700,11 @@ def chat(friend_id):
 
 @app.route('/messages')
 def messages_list():
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
     
-    me_id = session['user_id']
-    me = User.query.get(me_id)
+    me_id = current_user.id
+    me = current_user
     
     friends_relations = FriendRequest.query.filter(
         ((FriendRequest.sender_id == me_id) | (FriendRequest.receiver_id == me_id)),
@@ -727,12 +721,12 @@ def messages_list():
 
 @app.route('/create_group', methods=['POST'])
 def create_group():
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
         
     group_name = request.form.get('name')
     if group_name:
-        me = User.query.get(session['user_id'])
+        me = current_user
         new_group = Group(name=group_name, creator_id=me.id)
         new_group.members.append(me)
         db.session.add(new_group)
@@ -748,7 +742,7 @@ def show_updates():
 
 @app.route('/explorer/create', methods=['GET', 'POST'])
 def create_business():
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
         
     if request.method == 'POST':
@@ -771,7 +765,7 @@ def create_business():
 
 @app.route('/contact_business/<int:biz_id>')
 def contact_business(biz_id):
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         flash("Connectez-vous pour contacter ce business", "info")
         return redirect(url_for('login'))
     
@@ -795,12 +789,12 @@ def explorer_category(category):
 
 @app.route('/business/dashboard/<int:biz_id>')
 def business_dashboard(biz_id):
-    if 'user_id' not in session:
+    if not current_user.is_authenticated:
         return redirect(url_for('login'))
         
     biz = Business.query.get_or_404(biz_id)
     # Vérifier que c'est bien le propriétaire
-    if biz.owner_id != session['user_id']:
+    if biz.owner_id != current_user.id:
         return "Accès non autorisé", 403
         
     products = Product.query.filter_by(business_id=biz.id).all()
