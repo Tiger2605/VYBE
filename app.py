@@ -168,7 +168,6 @@ def register():
     
     return render_template('register.html')
 
-from flask_login import login_user, current_user
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")
@@ -384,11 +383,10 @@ def profile(username=None):
                            is_own_profile=is_own_profile,
                            friends_count=friends_count)
 
+
 @app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
 def edit_profile():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login'))
-    
     user = User.query.get(current_user.id)
     
     if request.method == 'POST':
@@ -397,13 +395,26 @@ def edit_profile():
         user.phone = request.form.get('phone')
         
         file = request.files.get('profile_pic')
+        
         if file and allowed_file(file.filename):
-            filename = secure_filename(f"profile_{user.id}_{file.filename}")
-            file.save(os.path.join(UPLOAD_FOLDER_PROFILES, filename))
-            user.profile_pic = filename
-            
+            try:
+                # 🔥 Upload vers Cloudinary
+                upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder="vybe_profiles",   # dossier dans cloudinary
+                    public_id=f"profile_{user.id}",  # nom unique
+                    overwrite=True           # remplace l'ancienne photo
+                )
+                
+                # ✅ URL sécurisée de l'image
+                user.profile_pic = upload_result['secure_url']
+                
+            except Exception as e:
+                print(f"Erreur upload Cloudinary: {e}")
+                flash("Erreur lors de l'upload de la photo.", "error")
+        
         db.session.commit()
-        flash("Ton profil a été mis à jour, @{} !".format(user.username))
+        flash(f"Ton profil a été mis à jour, @{user.username} !")
         return redirect(url_for('profile', username=user.username))
         
     return render_template('edit_profile.html', user=user)
@@ -540,7 +551,7 @@ def upload_video():
                 new_video = Video(
                     title=title, 
                     filename=file_url,
-                    user_id=session['user_id'], 
+                    user_id=current_user.id, 
                     category=category
                 )
                 
@@ -559,14 +570,14 @@ def like_video(video_id):
     if not current_user.is_authenticated:
         return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
         
-    existing_like = Like.query.filter_by(user_id=session['user_id'], video_id=video_id).first()
+    existing_like = Like.query.filter_by(user_id=current_user.id, video_id=video_id).first()
     video = Video.query.get_or_404(video_id)
     
     if existing_like:
         db.session.delete(existing_like) 
         action = "unliked"
     else:
-        new_like = Like(user_id=session['user_id'], video_id=video_id)
+        new_like = Like(user_id=current_user.id, video_id=video_id)
         db.session.add(new_like) 
         action = "liked"
         
