@@ -240,8 +240,8 @@ def reset_password(token):
 @login_required
 def dashboard():
     # 1. Vérification de la session
-    if 'username' not in session:
-        return redirect(url_for('login'))
+    #if 'username' not in session:
+    #    return redirect(url_for('login'))
     
     # 2. Récupération des paramètres de filtrage (Catégorie et Recherche)
     selected_category = request.args.get('category')
@@ -269,7 +269,7 @@ def dashboard():
     def get_pending_requests():
         # On récupère les demandes 'pending' pour l'utilisateur connecté
         requests = FriendRequest.query.filter_by(
-            receiver_id=session.get('user_id'), 
+            receiver_id=current_user.id, 
             status='pending'
         ).all()
         
@@ -338,7 +338,7 @@ def profile(username=None):
     # 3. Vérification : est-ce mon propre profil ?
     is_own_profile = False
     me = None
-    if 'user_id' in session:
+    if current_user.is_authenticated:
         me = User.query.get(session['user_id'])
         is_own_profile = (me.id == user.id)
 
@@ -439,7 +439,7 @@ def toggle_favorite(video_id):
     if 'user_id' not in session:
         return jsonify({'status': 'error', 'message': 'Connexion requise'}), 401
     
-    user_id = session['user_id']
+    user_id = current_user.id
     
     # 2. Chercher si ce favori existe déjà
     existing_fav = Favorite.query.filter_by(user_id=user_id, video_id=video_id).first()
