@@ -1,123 +1,263 @@
 {% extends "base.html" %}
 
-{% block title %}Publier une Vibe - VIBE AFRICA{% endblock %}
+{% block title %}Studio de Création - VYBE{% endblock %}
 
 {% block content %}
 <style>
+    :root {
+        --primary-color: #ff4b2b;
+        --secondary-color: #3498db;
+        --glass-bg: rgba(34, 34, 34, 0.9);
+        --border-color: rgba(255, 255, 255, 0.1);
+    }
+
     .upload-wrapper {
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 70vh;
-    }
-    .upload-container { 
-        background: #222; 
-        padding: 30px; 
-        border-radius: 15px; 
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); 
-        width: 100%;
-        max-width: 400px; 
-        border: 1px solid #333;
-        text-align: center;
-    }
-    h1 { color: #ff4b2b; font-size: 22px; margin-bottom: 20px; }
-    
-    .input-field { 
-        width: 100%; 
-        padding: 12px; 
-        margin: 10px 0; 
-        border: 1px solid #444; 
-        border-radius: 8px; 
-        box-sizing: border-box; 
-        background: #111;
-        color: white;
-        font-family: inherit;
-    }
-
-    /* Style pour le menu de sélection */
-    select.input-field {
-        cursor: pointer;
-        color: #bbb;
-    }
-
-    .file-input-wrapper {
-        border: 2px dashed #444;
+        min-height: 90vh;
         padding: 20px;
-        border-radius: 10px;
-        background: #1a1a1a;
-        margin: 15px 0;
-        cursor: pointer;
+        background: linear-gradient(135deg, #111 0%, #000 100%);
+    }
+
+    .studio-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        padding: 40px;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        width: 100%;
+        max-width: 800px;
+        border: 1px solid var(--border-color);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    @media (max-width: 768px) {
+        .studio-card { grid-template-columns: 1fr; }
+    }
+
+    .studio-header {
+        grid-column: 1 / -1;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 15px;
+        margin-bottom: 10px;
+    }
+
+    .studio-header h1 {
+        font-size: 24px;
+        background: linear-gradient(to right, #ff4b2b, #ff416c);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    /* Zone de Prévisualisation */
+    .preview-zone {
+        background: #111;
+        border-radius: 16px;
+        border: 2px dashed #333;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        min-height: 300px;
         transition: 0.3s;
     }
-    .file-input-wrapper:hover {
-        border-color: #ff4b2b;
-        background: #222;
+
+    .preview-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(255, 75, 43, 0.05);
     }
 
-    .btn-upload { 
-        width: 100%; 
-        padding: 15px; 
-        background: #ff4b2b; 
-        border: none; 
-        color: white; 
-        border-radius: 8px; 
-        cursor: pointer; 
-        font-weight: bold; 
-        font-size: 16px;
-        margin-top: 10px;
+    #preview-container img, #preview-container video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 12px;
     }
-    .cancel-link {
-        display: block;
-        margin-top: 20px;
-        color: #888;
-        text-decoration: none;
-        font-size: 14px;
+
+    /* Formulaire */
+    .form-zone { display: flex; flex-direction: column; gap: 15px; }
+
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+    .input-group label { color: #888; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+
+    .input-field {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        padding: 12px 15px;
+        border-radius: 10px;
+        color: white;
+        font-size: 15px;
+        transition: 0.3s;
+    }
+
+    .input-field:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(255, 75, 43, 0.2);
+    }
+
+    .btn-publish {
+        background: linear-gradient(to right, #ff4b2b, #ff416c);
+        color: white;
+        border: none;
+        padding: 15px;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: 0.3s transform;
+    }
+
+    .btn-publish:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4); }
+
+    /* Barre de progression */
+    .progress-container {
+        display: none;
+        margin-top: 15px;
+    }
+    .progress-bar {
+        height: 6px;
+        background: #333;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        background: var(--primary-color);
+        width: 0%;
+        transition: 0.4s;
     }
 </style>
 
 <div class="upload-wrapper">
-    <div class="upload-container">
-        <h1>Publier sur VIBE AFRICA 🌍</h1>
-        
-        <form method="POST" enctype="multipart/form-data">
-            <input type="text" name="title" class="input-field" placeholder="Légende (ex: Ma nouvelle photo !)" required>
-            
-            <select name="category" class="input-field" required>
-                <option value="" disabled selected>Choisir une catégorie...</option>
-                <option value="Infos">📰 Infos / Actualités</option>
-                <option value="Hot">🔥 Hot (Compte de feu)</option>
-                <option value="Photos">📸 Photos</option>
-                <option value="Tech">💻 Technologie</option>
-                <option value="Vêtements">👕 Mode</option>
-                <option value="Education">📚 École / Éducation</option>
-            </select>
+    <div class="studio-card">
+        <div class="studio-header">
+            <h1>VYBE STUDIO 🎥</h1>
+            <p style="color: #666; font-size: 13px;">Partagez votre contenu avec l'Afrique</p>
+        </div>
 
-            <div class="file-input-wrapper" onclick="document.getElementById('file-field').click();">
-                <p id="upload-icon" style="margin: 0; color: #3498db; font-weight: bold;">📁 Cliquer pour choisir un média</p>
-                <p id="file-name-display" style="font-size: 11px; color: #888; margin-top: 5px;">Vidéo MP4 ou Image JPG/PNG</p>
-                
-                <input type="file" id="file-field" name="file" accept="video/*,image/*" required style="display: none;" onchange="showFileName(this)">
+        <div class="preview-zone" id="drop-zone" onclick="document.getElementById('file-field').click();">
+            <div id="preview-placeholder">
+                <div style="font-size: 40px; margin-bottom: 10px;">☁️</div>
+                <p style="color: #bbb; margin: 0; font-weight: 500;">Glissez votre média ici</p>
+                <p style="color: #666; font-size: 12px;">ou cliquez pour parcourir</p>
             </div>
-            
-            <button type="submit" class="btn-upload">Mettre en ligne</button>
+            <div id="preview-container" style="display: none; width: 100%; height: 100%;">
+                </div>
+        </div>
+
+        <form class="form-zone" id="upload-form" method="POST" enctype="multipart/form-data">
+            <div class="input-group">
+                <label>Légende de la Vibe</label>
+                <input type="text" name="title" class="input-field" placeholder="Dites quelque chose..." required>
+            </div>
+
+            <div class="input-group">
+                <label>Catégorie</label>
+                <select name="category" class="input-field" required>
+                    <option value="" disabled selected>Choisir...</option>
+                    <option value="Infos">📰 Infos</option>
+                    <option value="Hot">🔥 Hot</option>
+                    <option value="Photos">📸 Photos</option>
+                    <option value="Tech">💻 Technologie</option>
+                    <option value="Education">📚 Éducation</option>
+                </select>
+            </div>
+
+            <input type="file" id="file-field" name="file" accept="video/*,image/*" required style="display: none;" onchange="handleFiles(this.files)">
+
+            <div class="progress-container" id="prog-container">
+                <p style="font-size: 11px; color: #ff4b2b; margin-bottom: 5px;" id="prog-text">Envoi en cours... 0%</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="prog-fill"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-publish" id="submit-btn">Diffuser la Vibe</button>
+            <a href="{{ url_for('dashboard') }}" style="text-align: center; color: #666; font-size: 13px; text-decoration: none; margin-top: 5px;">Plus tard</a>
         </form>
-        
-        <a href="{{ url_for('dashboard') }}" class="cancel-link">Annuler et revenir</a>
     </div>
 </div>
 
 <script>
-    function showFileName(input) {
-        if (input.files && input.files[0]) {
-            var fileName = input.files[0].name;
-            var display = document.getElementById('file-name-display');
-            var icon = document.getElementById('upload-icon');
-            
-            display.innerText = "Fichier prêt : " + fileName;
-            display.style.color = "#2ecc71";
-            icon.innerText = "✅ Fichier sélectionné";
-            icon.style.color = "#2ecc71";
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-field');
+    const previewContainer = document.getElementById('preview-container');
+    const previewPlaceholder = document.getElementById('preview-placeholder');
+
+    // Gestion du Drag & Drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults (e) { e.preventDefault(); e.stopPropagation(); }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        handleFiles(files);
+    });
+
+    function handleFiles(files) {
+        if (files.length > 0) {
+            const file = files[0];
+            previewPlaceholder.style.display = 'none';
+            previewContainer.style.display = 'block';
+            previewContainer.innerHTML = '';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    previewContainer.appendChild(img);
+                } else if (file.type.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.src = e.target.result;
+                    video.controls = true;
+                    previewContainer.appendChild(video);
+                }
+            };
+            reader.readAsDataURL(file);
         }
     }
+
+    // Animation de progression lors du clic sur Envoyer
+    document.getElementById('upload-form').onsubmit = function() {
+        document.getElementById('prog-container').style.display = 'block';
+        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('submit-btn').innerText = "Traitement...";
+        
+        let width = 0;
+        const fill = document.getElementById('prog-fill');
+        const text = document.getElementById('prog-text');
+        
+        const interval = setInterval(() => {
+            if (width >= 95) {
+                clearInterval(interval);
+            } else {
+                width++;
+                fill.style.width = width + '%';
+                text.innerText = "Optimisation du média... " + width + "%";
+            }
+        }, 100);
+    };
 </script>
 {% endblock %}
