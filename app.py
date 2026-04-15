@@ -2,7 +2,7 @@ import re
 import os
 from sqlalchemy import text
 from flask_migrate import Migrate
-from flask_login import LoginManager ,login_required, current_user, login_user
+from flask_login import LoginManager ,login_required, current_user, login_user, logout_user
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -291,7 +291,7 @@ def dashboard():
 @login_required
 def logout():
     logout_user() # Déconnexion officielle
-    session.clear()
+    #session.clear()
     flash("Vous avez été déconnecté.", "success")
     return redirect(url_for('login'))
 
