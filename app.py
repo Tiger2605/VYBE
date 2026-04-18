@@ -876,12 +876,22 @@ def fix_db_complete():
     # ... tout le code de création des tables ...
     return "Base de données mise à jour !"
 
-# --- INITIALISATION AU LANCEMENT ---
+# from sqlalchemy import text  # Assure-toi que cet import est bien présent en haut de app.py
 
+# --- INITIALISATION AU LANCEMENT ---
 with app.app_context():
-    # Crée les tables si elles n'existent pas
+    # 1. Crée les tables de base si elles n'existent pas
     db.create_all()
-    print("VIBE AFRICA : Base de données prête et sécurisée.")
+    
+    # 2. Exécute le correctif de colonnes (Option B)
+    try:
+        from fix_db import add_columns
+        add_columns()
+        print("VYBE : Correctif de colonnes appliqué avec succès.")
+    except Exception as e:
+        print(f"VYBE : Erreur lors de l'application du correctif : {e}")
+        
+    print("VYBE AFRICA : Base de données prête et sécurisée.")
 
 if __name__ == '__main__':
     app.run(debug=True)
