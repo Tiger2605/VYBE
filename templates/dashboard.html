@@ -1,368 +1,356 @@
 {% extends "base.html" %}
 
-{% block title %}Feed - VIBE AFRICA{% endblock %}
+{% block title %}Feed - VYBE{% endblock %}
 
 {% block content %}
 <style>
-    /* Barre de recherche */
-    .search-container {
-        margin-bottom: 20px;
-        display: flex;
-        gap: 8px;
-    }
-    .search-input {
-        flex: 1;
-        background: #222;
-        border: 1px solid #333;
-        color: white;
-        padding: 12px 18px;
-        border-radius: 25px;
-        font-size: 14px;
-        outline: none;
-        transition: border-color 0.3s;
-    }
-    .search-input:focus { border-color: #ff4b2b; }
-    
-    .search-btn {
-        background: #ff4b2b;
-        border: none;
-        color: white;
-        padding: 0 20px;
-        border-radius: 25px;
-        cursor: pointer;
-        font-weight: bold;
-    }
-    .clear-search {
-        background: #333;
-        color: #888;
-        padding: 12px 15px;
-        border-radius: 25px;
-        text-decoration: none;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-    }
+/* ===== GLOBAL & GRID ===== */
+.vibe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    padding-bottom: 50px;
+}
 
-    /* Barre de catégories scrollable */
-    .category-bar {
-        display: flex;
-        overflow-x: auto;
-        white-space: nowrap;
-        padding: 10px 0;
-        margin-bottom: 15px;
-        scrollbar-width: none;
-    }
-    .category-bar::-webkit-scrollbar { display: none; }
+/* ===== CARD DESIGN ===== */
+.vibe-card {
+    background: #1a1a1a;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #222;
+    transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    display: flex;
+    flex-direction: column;
+}
+.vibe-card:hover {
+    transform: translateY(-5px);
+    border-color: #ff4b2b;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
 
-    .cat-item {
-        background: #222;
-        color: white;
-        padding: 8px 15px;
-        border-radius: 20px;
-        margin-right: 8px;
-        text-decoration: none;
-        font-size: 13px;
-        border: 1px solid #333;
-        transition: 0.3s;
-    }
-    .cat-item.active { background: #ff4b2b; border-color: #ff4b2b; font-weight: bold; }
+/* ===== HEADER ===== */
+.vibe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+}
+.author-link { 
+    color: white; 
+    text-decoration: none; 
+    font-weight: bold; 
+    font-size: 14px;
+}
+.vibe-badge {
+    background: #333;
+    color: #ff4b2b;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
 
-    /* Styles du Feed */
-    .vibe-card { border-bottom: 1px solid #222; padding: 15px 0; margin-bottom: 10px; }
-    .vibe-header { padding: 8px 0; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
-    .vibe-badge { background: #333; color: #ff4b2b; font-size: 10px; padding: 2px 8px; border-radius: 5px; }
-    
-    .vibe-media { width: 100%; border-radius: 12px; background: black; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: block; }
-    
-    .vibe-footer { padding: 12px 0; }
-    .vibe-title { display: block; font-size: 15px; margin-bottom: 8px; }
+/* ===== MEDIA WRAPPER ===== */
+.media-wrapper {
+    position: relative;
+    padding-top: 56.25%; /* Ratio 16:9 */
+    background: black;
+    cursor: pointer;
+    overflow: hidden;
+}
+.vibe-media-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-    .vibe-actions { display: flex; gap: 15px; margin-top: 10px; align-items: center; }
-    .action-link { text-decoration: none; font-size: 18px; color: white; background: #222; padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
-    .action-link:hover { background: #333; }
-    .view-count-box { background: transparent; color: #888; font-size: 14px; cursor: default; }
+.play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,75,43,0.8);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    opacity: 0;
+    transition: 0.3s;
+}
+.vibe-card:hover .play-overlay { opacity: 1; }
 
-    .comment-area { display: none; margin-top: 15px; background: #1a1a1a; padding: 12px; border-radius: 10px; border: 1px solid #333; }
-    .comment-list { max-height: 200px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
-    .comment-item { font-size: 13px; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #222; }
+/* ===== BODY ===== */
+.vibe-body { padding: 15px; flex-grow: 1; }
+.vibe-title { color: white; font-weight: bold; font-size: 16px; margin-bottom: 5px; }
+.vibe-desc { color: #aaa; font-size: 13px; line-height: 1.4; }
+.vibe-tags { color: #3498db; font-size: 12px; margin-top: 8px; font-weight: 500; }
+
+/* ===== ACTIONS ===== */
+.vibe-actions {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px;
+    background: #111;
+    border-top: 1px solid #222;
+}
+.action-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: 0.2s;
+}
+.action-btn:hover { color: #ff4b2b; }
+
+/* ===== COMMENT AREA ===== */
+.comment-area {
+    display: none;
+    padding: 15px;
+    background: #151515;
+    border-top: 1px solid #222;
+}
+.comment-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.comment-input-group input {
+    flex: 1;
+    background: #222;
+    border: 1px solid #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    outline: none;
+}
+.comment-send-btn {
+    background: #ff4b2b;
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.comment-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+.comment-item {
+    font-size: 13px;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #222;
+}
+
+/* ===== SEARCH & CATEGORIES ===== */
+.search-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.search-input {
+    flex: 1;
+    padding: 12px 20px;
+    border-radius: 25px;
+    border: 1px solid #333;
+    background: #1a1a1a;
+    color: white;
+    outline: none;
+}
+.search-input:focus { border-color: #ff4b2b; }
+.search-btn {
+    background: #ff4b2b;
+    border: none;
+    color: white;
+    padding: 0 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.category-bar {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    margin-bottom: 25px;
+    padding-bottom: 5px;
+    scrollbar-width: none;
+}
+.cat-item {
+    background: #222;
+    color: #888;
+    padding: 8px 18px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 13px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+.cat-item.active {
+    background: #ff4b2b;
+    color: white;
+    font-weight: bold;
+}
 </style>
 
 <div class="feed-container">
-    <h2 style="text-align: center; margin-bottom: 15px; font-size: 20px;">VIBE AFRICA 🌍</h2>
+    <h2 style="text-align:center; font-weight: 900; letter-spacing: 2px; margin-bottom: 20px;">VYBE 🌍</h2>
 
-    <form action="{{ url_for('dashboard') }}" method="GET" class="search-container">
-        <input type="text" name="q" class="search-input" value="{{ search_query or '' }}" placeholder="Rechercher une vibe...">
-        {% if search_query %}<a href="{{ url_for('dashboard') }}" class="clear-search">✖</a>{% endif %}
+    <form method="GET" class="search-container">
+        <input type="text" name="q" value="{{ search_query or '' }}" class="search-input" placeholder="Explorer l'univers VYBE...">
         <button type="submit" class="search-btn">🔍</button>
     </form>
 
     <div class="category-bar">
-        <a href="{{ url_for('dashboard') }}" class="cat-item {% if not selected_category %}active{% endif %}">Tout</a>
-        <a href="{{ url_for('dashboard', category='Infos') }}" class="cat-item {% if selected_category == 'Infos' %}active{% endif %}">📰 Infos</a>
-        <a href="{{ url_for('dashboard', category='Hot') }}" class="cat-item {% if selected_category == 'Hot' %}active{% endif %}">🔥 Hot</a>
-        <a href="{{ url_for('dashboard', category='Photos') }}" class="cat-item {% if selected_category == 'Photos' %}active{% endif %}">📸 Photos</a>
-        <a href="{{ url_for('dashboard', category='Tech') }}" class="cat-item {% if selected_category == 'Tech' %}active{% endif %}">💻 Tech</a>
-        <a href="{{ url_for('dashboard', category='Education') }}" class="cat-item {% if selected_category == 'Education' %}active{% endif %}">📚 École</a>
+        <a href="{{ url_for('dashboard') }}" class="cat-item {% if not request.args.get('category') %}active{% endif %}">Tout</a>
+        <a href="{{ url_for('dashboard', category='Hot') }}" class="cat-item {% if request.args.get('category') == 'Hot' %}active{% endif %}">🔥 Hot</a>
+        <a href="{{ url_for('dashboard', category='Tech') }}" class="cat-item {% if request.args.get('category') == 'Tech' %}active{% endif %}">💻 Tech</a>
+        <a href="{{ url_for('dashboard', category='Photos') }}" class="cat-item {% if request.args.get('category') == 'Photos' %}active{% endif %}">📸 Photos</a>
     </div>
 
-    {% set pending_requests = get_pending_requests() %}
-    {% if pending_requests %}
-    <div style="background: rgba(52, 152, 219, 0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #3498db;">
-        <h3 style="color: #3498db; margin: 0 0 12px 0; font-size: 14px;">🤝 Demandes d'amis</h3>
-        {% for req in pending_requests %}
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #222; padding: 10px; border-radius: 8px;">
-                <span style="font-size: 14px;"><strong>@{{ req.sender_name }}</strong></span>
-                <a href="{{ url_for('accept_friend', request_id=req.id) }}" 
-                   style="background: #2ecc71; color: white; padding: 5px 12px; border-radius: 20px; text-decoration: none; font-size: 12px; font-weight: bold;">Accepter</a>
+    <div class="vibe-grid">
+        {% for video in videos %}
+        <div class="vibe-card">
+            <div class="vibe-header">
+                <a href="{{ url_for('profile', username=video.author.username) }}" class="author-link">
+                    @{{ video.author.username|lower }}
+                </a>
+                <span class="vibe-badge">{{ video.category }}</span>
             </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
-    {% for video in videos %}
-    <div class="vibe-card">
-        <div class="vibe-header">
-            <a href="{{ url_for('profile', username=video.author.username) }}" style="color: white; text-decoration: none;">
-                @{{ video.author.username }}
-            </a>
-            <span class="vibe-badge">{{ video.category }}</span>
-        </div>
-        
-        {% if video.category == 'Photos' %}
-            {% if video.filename.startswith('http') %}
-                <img src="{{ video.filename }}" class="vibe-media" alt="{{ video.title }}">
-            {% else %}
-                <img src="{{ url_for('static', filename='uploads/' + video.filename) }}" class="vibe-media" alt="{{ video.title }}">
-            {% endif %}
-        {% else %}
-            <video class="vibe-media" controls preload="metadata">
-                {% if video.filename.startswith('http') %}
-                    <source src="{{ video.filename }}" type="video/mp4">
+            <div class="media-wrapper" onclick="location.href='/video/{{ video.id }}'">
+                {% if video.category == 'Photos' %}
+                    <img src="{{ video.filename if video.filename.startswith('http') else url_for('static', filename='uploads/' + video.filename) }}" class="vibe-media-content" loading="lazy">
                 {% else %}
-                    <source src="{{ url_for('static', filename='uploads/' + video.filename) }}" type="video/mp4">
+                    {% if video.cover_url %}
+                        <img src="{{ video.cover_url }}" class="vibe-media-content" loading="lazy">
+                    {% else %}
+                        <video class="vibe-media-content" preload="metadata">
+                            <source src="{{ video.filename if video.filename.startswith('http') else url_for('static', filename='uploads/' + video.filename) }}" type="video/mp4">
+                        </video>
+                    {% endif %}
+                    <div class="play-overlay">▶</div>
                 {% endif %}
-                Votre navigateur ne supporte pas la lecture de vidéos.
-            </video>
-        {% endif %}
-
-        <div class="vibe-footer">
-            <span class="vibe-title"><strong>{{ video.title }}</strong></span>
-            
-            <div class="vibe-actions">
-    
-                <div class="action-link" onclick="toggleLike('{{ video.id }}')" id="like-container-{{ video.id }}" style="color: #ff4b2b; cursor: pointer;">
-                    ❤️ <span id="like-count-{{ video.id }}">{{ video.likes|length }}</span>
-                </div>
-
-                <div class="action-link" onclick="toggleComments('{{ video.id }}')">
-                    💬 <span id="comment-count-{{ video.id }}" style="font-size: 14px;">{{ video.comments|length }}</span>
-                </div>
-
-                <div class="action-link view-count-box">
-                    👁️ <span id="view-count-{{ video.id }}">{{ video.views or 0 }}</span>
-                </div>
-            
-                <div class="action-link" onclick="toggleFollow('{{ video.author.id }}')" id="follow-container-{{ video.author.id }}" style="cursor: pointer;">
-                    <span id="follow-icon-{{ video.author.id }}">
-                        {% if current_user.is_authenticated and current_user.is_following(video.author) %} 
-                            ✅
-                        {% else %}
-                            👤
-                        {% endif %} 
-                    </span>
-                    <span id="follow-text-{{ video.author.id }}" style="font-size: 13px; font-weight: bold; color: {{ '#888' if current_user.is_authenticated and current_user.is_following(video.author) else '#ff4b2b' }};">
-                        {% if current_user.is_authenticated and current_user.is_following(video.author) %}
-                            Abonné
-                        {% else %}
-                            S'abonner
-                        {% endif %}
-                    </span>
-                </div>    
-
-                <div class="action-link" onclick="toggleFavorite('{{ video.id }}')" id="fav-container-{{ video.id }}" 
-                    style="cursor: pointer; color: {{ '#f1c40f' if current_user.is_authenticated and video in current_user.favorites else 'white' }};">
-                    🔖 <span style="font-size: 14px;">Favoris</span>
-                </div>
-
-                <div class="action-link" onclick="copyLink('{{ video.id }}')">
-                    🔗 <span style="font-size: 14px;">Partager</span>
-                </div>
-
             </div>
 
-            <div id="comment-section-{{ video.id }}" class="comment-area">
-                <form onsubmit="submitComment(event, '{{ video.id }}')" style="display: flex; gap: 8px;">
-                    <input type="text" id="comment-input-{{ video.id }}" name="content" placeholder="Ton avis..." required 
-                           style="flex: 1; background: #333; border: 1px solid #444; color: white; padding: 8px 12px; border-radius: 20px; font-size: 13px;">
-                    <button type="submit" style="background: #ff4b2b; border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;">OK</button>
-                </form>
+            <div class="vibe-body">
+                <div class="vibe-title">{{ video.title }}</div>
+                <div class="vibe-desc">{{ video.description[:100] }}{% if video.description|length > 100 %}...{% endif %}</div>
+                {% if video.tags %}
+                    <div class="vibe-tags">#{{ video.tags.replace(' ', ' #') }}</div>
+                {% endif %}
+            </div>
 
-                <div class="comment-list" id="comment-list-{{ video.id }}">
+            <div class="vibe-actions">
+                <button class="action-btn" onclick="toggleLike('{{ video.id }}')">
+                    ❤️ <span id="like-{{ video.id }}">{{ video.likes|length }}</span>
+                </button>
+
+                <button class="action-btn" onclick="toggleComments('{{ video.id }}')">
+                    💬 {{ video.comments|length }}
+                </button>
+
+                <button class="action-btn" style="cursor: default;">
+                    👁️ {{ video.views or 0 }}
+                </button>
+
+                <button class="action-btn" onclick="toggleFavorite('{{ video.id }}')" id="fav-btn-{{ video.id }}">
+                    🔖
+                </button>
+
+                <button class="action-btn" onclick="copyLink('{{ video.id }}')">
+                    🔗
+                </button>
+            </div>
+
+            <div class="comment-area" id="comments-{{ video.id }}">
+                <div class="comment-input-group">
+                    <input type="text" id="input-{{ video.id }}" placeholder="Ajouter un avis...">
+                    <button class="comment-send-btn" onclick="submitComment('{{ video.id }}')">OK</button>
+                </div>
+
+                <div class="comment-list" id="list-{{ video.id }}">
                     {% for comment in video.comments|sort(attribute='created_at', reverse=true) %}
                         <div class="comment-item">
-                            <strong style="color: #ff4b2b;">@{{ comment.author.username|lower }}</strong>
-                            <span style="color: #eee;">{{ comment.content }}</span>
+                            <b style="color: #ff4b2b;">@{{ comment.author.username }}</b>: {{ comment.content }}
                         </div>
-                    {% else %}
-                        <p style="font-size: 11px; color: #666; text-align: center;">
-                            Soyez le premier à donner votre avis ! 🌍
-                        </p>
                     {% endfor %}
                 </div>
             </div>
+
         </div>
+        {% endfor %}
     </div>
-    {% else %}
-        <div style="text-align: center; color: #666; padding: 60px 20px;">
-            <p>Rien à voir ici pour l'instant. 🎥📸</p>
-            <a href="{{ url_for('upload_video') }}" style="color: #ff4b2b; text-decoration: none; font-weight: bold;">Partage ta première vibe !</a>
-        </div>
-    {% endfor %}
 </div>
 
 <script>
-    function toggleComments(videoId) {
-        var section = document.getElementById("comment-section-" + videoId);
-        section.style.display = (section.style.display === "none" || section.style.display === "") ? "block" : "none";
-    }
+// AFFICHER/MASQUER LES COMMENTAIRES
+function toggleComments(id){
+    let el = document.getElementById("comments-"+id);
+    el.style.display = (el.style.display==="block") ? "none" : "block";
+}
 
-    function copyLink(videoId) {
-        const url = window.location.origin + "/profile/" + videoId; 
-        navigator.clipboard.writeText(url).then(() => {
-            alert("Lien copié ! Partage cette Vibe avec tes amis 🌍");
-        });
-    }
-
-    // Gérer le Like en AJAX
-    function toggleLike(videoId) {
-        fetch(`/like/${videoId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const countSpan = document.getElementById(`like-count-${videoId}`);
-                if (countSpan) countSpan.innerText = data.likes_count;
-                
-                const container = document.getElementById(`like-container-${videoId}`);
-                if (container) {
-                    container.style.opacity = (data.action === 'liked') ? "1" : "0.5";
-                }
-            }
-        })
-        .catch(err => console.error("Erreur lors du like :", err));
-    }
-
-    // Gérer les Favoris en AJAX
-    function toggleFavorite(videoId) {
-        fetch(`/favorite/${videoId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const container = document.getElementById(`fav-container-${videoId}`);
-                if (container) {
-                    container.style.color = (data.action === 'added') ? "#f1c40f" : "white";
-                    const label = container.querySelector('span');
-                    if (label) {
-                        label.innerText = (data.action === 'added') ? "Enregistré" : "Favoris";
-                    }
-                }
-            }
-        })
-        .catch(err => console.error("Erreur favoris :", err));
-    }
-
-    // Gérer le Commentaire en AJAX (CORRIGÉ AVEC COMPTEUR)
-    function submitComment(event, videoId) {
-        event.preventDefault(); 
-        
-        const input = document.getElementById(`comment-input-${videoId}`);
-        const content = input.value;
-        const list = document.getElementById(`comment-list-${videoId}`);
-
-        fetch(`/add_comment/${videoId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: content })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                // 1. On ajoute le commentaire à la liste
-                const newComment = document.createElement('div');
-                newComment.className = 'comment-item';
-                newComment.innerHTML = `<strong style="color: #ff4b2b;">@${data.username}</strong> <span style="color: #eee;">${data.content}</span>`;
-                
-                list.prepend(newComment);
-                input.value = ""; 
-
-                // 2. On met à jour le compteur visuel (💬)
-                const countSpan = document.getElementById(`comment-count-${videoId}`);
-                if (countSpan) {
-                    let currentCount = parseInt(countSpan.innerText) || 0;
-                    countSpan.innerText = currentCount + 1;
-                }
-            }
-        })
-        .catch(err => console.error("Erreur commentaire :", err));
-    }
-
-    function toggleFollow(authorId) {
-        alert("Le bouton de l'auteur " + authorId + " a été cliqué");
-        fetch(`/follow/${authorId}`, { method: 'POST' })
-        .then(response => {
-            if (response.status === 401) {
-                window.location.href = '/login';
-                return;
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data && data.status === 'success') {
-                // Sélectionne tous les boutons de cet auteur sur la page
-                const icon = document.getElementById(`follow-icon-${authorId}`);
-                const text = document.getElementById(`follow-text-${authorId}`);
-
-                if (data.action === 'followed') {
-                    if (icon) icon.innerText = '✅';
-                    if (text) {
-                        text.innerText = 'Abonné';
-                        text.style.color = '#888';
-                    }
-                } else {
-                    if (icon) icon.innerText = '👤';
-                    if (text) {
-                        text.innerText = "S'abonner";
-                        text.style.color = '#ff4b2b';
-                    }
-                }
-            }
-        })
-        .catch(err => console.error("Erreur follow :", err));
-    }
-
-    // Gestion du compteur de vues
-    document.querySelectorAll('video').forEach(videoElement => {
-        videoElement.addEventListener('play', function() {
-            const card = this.closest('.vibe-card');
-            const commentSection = card.querySelector('[id^="comment-section-"]');
-            if(commentSection) {
-                const videoId = commentSection.id.split('-').pop();
-                fetch(`/increment_view/${videoId}`, { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        if(data.status === 'success') {
-                            const viewSpan = document.getElementById(`view-count-${videoId}`);
-                            if(viewSpan) viewSpan.innerText = data.new_views;
-                        }
-                    })
-                    .catch(err => console.error("Erreur compteur de vues:", err));
-            }
-        }, { once: true });
+// COPIER LE LIEN
+function copyLink(id){
+    const url = window.location.origin + "/video/" + id;
+    navigator.clipboard.writeText(url).then(() => {
+        alert("Lien VYBE copié ! 🌍");
     });
-</script> 
+}
+
+// LIKE AJAX
+function toggleLike(id){
+    fetch("/like/"+id, {method:"POST"})
+    .then(r => r.json())
+    .then(d => {
+        document.getElementById("like-"+id).innerText = d.likes_count;
+    });
+}
+
+// FAVORIS AJAX
+function toggleFavorite(id){
+    fetch("/favorite/"+id, {method:"POST"})
+    .then(() => {
+        const btn = document.getElementById("fav-btn-"+id);
+        btn.style.color = (btn.style.color === "rgb(241, 196, 15)") ? "#888" : "#f1c40f"; // Jaune si favori
+    });
+}
+
+// ENVOYER COMMENTAIRE AJAX
+function submitComment(id){
+    let input = document.getElementById("input-"+id);
+    let list = document.getElementById("list-"+id);
+    
+    if(!input.value.trim()) return;
+
+    fetch("/add_comment/"+id, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({content: input.value})
+    })
+    .then(r => r.json())
+    .then(data => {
+        let newC = document.createElement("div");
+        newC.className = "comment-item";
+        newC.innerHTML = `<b style="color: #ff4b2b;">@${data.username}</b>: ${data.content}`;
+        list.prepend(newC); // Ajoute au début de la liste
+        input.value = "";
+    });
+}
+</script>
+
 {% endblock %}

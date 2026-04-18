@@ -532,15 +532,21 @@ def upload_video():
         return redirect(url_for('login'))
         
     if request.method == 'POST':
+        # On vérifie le fichier principal
         if 'file' not in request.files:
             return "Pas de fichier détecté"
         
         file = request.files['file']
+        cover_file = request.files.get('cover') # On récupère la couverture (optionnelle)
+        
         title = request.form.get('title')
+        description = request.form.get('description')
+        tags = request.form.get('tags')
         category = request.form.get('category') 
         
         if file and file.filename != '':
             try:
+                # 1. Upload du média principal
                 upload_result = cloudinary.uploader.upload(
                     file, 
                     resource_type="auto",
@@ -548,21 +554,34 @@ def upload_video():
                 )
                 file_url = upload_result['secure_url']
                 
+                # 2. Upload de la couverture si elle existe
+                cover_url = None
+                if cover_file and cover_file.filename != '':
+                    cover_res = cloudinary.uploader.upload(
+                        cover_file,
+                        folder="vibe_africa_covers"
+                    )
+                    cover_url = cover_res['secure_url']
+                
+                # 3. Création de l'entrée en base
                 new_video = Video(
                     title=title,
-                    description=request.form.get('description'),
-                    tags=request.form.get('tags'),
+                    description=description,
+                    tags=tags,
                     filename=file_url,
+                    cover_url=cover_url, # On enregistre le lien de la miniature
                     user_id=current_user.id, 
-                    category=request.form.get('category')
+                    category=category
                 )
                 
                 db.session.add(new_video)
                 db.session.commit()
+                
                 return redirect(url_for('dashboard'))
 
             except Exception as e:
-                print(f"Erreur lors de l'upload Cloudinary : {e}")
+                db.session.rollback()
+                print(f"Erreur lors de l'upload : {e}")
                 return f"Erreur de mise en ligne : {e}", 500
             
     return render_template('upload.html')

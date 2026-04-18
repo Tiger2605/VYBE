@@ -128,6 +128,9 @@ class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
     filename = db.Column(db.String(500), nullable=False)
+    description = db.Column(db.Text)
+    tags = db.Column(db.String(200))
+    cover_url = db.Column(db.String(255))
     category = db.Column(db.String(50), nullable=False, default='Autres')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     likes = db.relationship('Like', backref='video', lazy=True)
@@ -135,6 +138,7 @@ class Video(db.Model):
     views = db.Column(db.Integer, default=0)
     comments = db.relationship('Comment', backref='video_associated', lazy=True, cascade="all, delete-orphan")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
