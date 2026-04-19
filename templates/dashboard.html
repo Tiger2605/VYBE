@@ -232,7 +232,7 @@
                 <span class="vibe-badge">{{ video.category }}</span>
             </div>
 
-            <div class="media-wrapper" onclick="location.href='/video/{{ video.id }}'">
+            <div class="media-wrapper" onclick="location.href='/vibe/{{ video.id }}'">
                 {% if video.category == 'Photos' %}
                     <img src="{{ video.filename if video.filename.startswith('http') else url_for('static', filename='uploads/' + video.filename) }}" class="vibe-media-content" loading="lazy">
                 {% else %}

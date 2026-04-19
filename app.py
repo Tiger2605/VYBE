@@ -664,7 +664,7 @@ def increment_view(video_id):
     db.session.commit()
     return {'status': 'success', 'new_views': video.views}, 200
 
-@app.route('/vibe/<int:vibe_id>')
+@app.route('/vibe/<int:vibe_id>') # On garde 'vibe' c'est plus stylé
 def view_vibe(vibe_id):
     vibe = Video.query.get_or_404(vibe_id)
     
@@ -672,6 +672,7 @@ def view_vibe(vibe_id):
     vibe.views += 1
     db.session.commit()
     
+    # Ta logique de navigation (Top !)
     all_vibes = Video.query.order_by(Video.created_at.desc()).all()
     vibe_ids = [v.id for v in all_vibes]
     current_index = vibe_ids.index(vibe.id)
@@ -680,9 +681,8 @@ def view_vibe(vibe_id):
     prev_id = vibe_ids[current_index - 1] if current_index > 0 else None
 
     return render_template('view_vibe.html', 
-                            vibe=vibe, 
-                            next_id=next_id, 
-                            prev_id=prev_id)
+                           vibe=vibe, next_id=next_id, 
+                           prev_id=prev_id)
 
 @app.route('/accept_friend/<int:request_id>')
 def accept_friend(request_id):
