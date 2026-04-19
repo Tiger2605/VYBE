@@ -249,7 +249,15 @@
 
             <div class="vibe-body">
                 <div class="vibe-title">{{ video.title }}</div>
-                <div class="vibe-desc">{{ video.description[:100] }}{% if video.description|length > 100 %}...{% endif %}</div>
+                
+                <div class="vibe-desc">
+                    {% if video.description %}
+                        {{ video.description[:100] }}{% if video.description|length > 100 %}...{% endif %}
+                    {% else %}
+                        <span style="color: #555; font-style: italic;">Aucune description</span>
+                    {% endif %}
+                </div>
+
                 {% if video.tags %}
                     <div class="vibe-tags">#{{ video.tags.replace(' ', ' #') }}</div>
                 {% endif %}

@@ -881,21 +881,12 @@ def fix_db_complete():
 # --- INITIALISATION AU LANCEMENT ---
 with app.app_context():
     db.create_all()
-    
-    # PATCH D'URGENCE : On force l'ajout des colonnes directement via le moteur SQL
     try:
-        with db.engine.connect() as conn:
-            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS description VARCHAR(500)"))
-            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS category VARCHAR(100)"))
-            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS tags VARCHAR(200)"))
-            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0"))
-            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS cover_url VARCHAR(500)"))
-            conn.commit() # On valide les changements
-        print("VYBE : Base de données patchée avec succès (Force Brute) !")
+        from fix_db import add_columns
+        add_columns(db)  # <-- N'oublie pas le 'db' ici !
+        print("VYBE : Patch appliqué.")
     except Exception as e:
-        print(f"VYBE : Le patch a déjà été appliqué ou erreur : {e}")
-
-    print("VYBE AFRICA : Système prêt.")
+        print(f"VYBE : Erreur : {e}")
 
 if __name__ == '__main__':
     app.run(debug=True)
