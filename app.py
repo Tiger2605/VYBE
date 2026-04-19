@@ -876,22 +876,26 @@ def fix_db_complete():
     # ... tout le code de création des tables ...
     return "Base de données mise à jour !"
 
-# from sqlalchemy import text  # Assure-toi que cet import est bien présent en haut de app.py
+#from sqlalchemy import text # Vérifie que c'est bien en haut de ton fichier app.py
 
 # --- INITIALISATION AU LANCEMENT ---
 with app.app_context():
-    # 1. Crée les tables de base si elles n'existent pas
     db.create_all()
     
-    # 2. Exécute le correctif de colonnes (Option B)
+    # PATCH D'URGENCE : On force l'ajout des colonnes directement via le moteur SQL
     try:
-        from fix_db import add_columns
-        add_columns()
-        print("VYBE : Correctif de colonnes appliqué avec succès.")
+        with db.engine.connect() as conn:
+            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS description VARCHAR(500)"))
+            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS category VARCHAR(100)"))
+            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS tags VARCHAR(200)"))
+            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0"))
+            conn.execute(text("ALTER TABLE video ADD COLUMN IF NOT EXISTS cover_url VARCHAR(500)"))
+            conn.commit() # On valide les changements
+        print("VYBE : Base de données patchée avec succès (Force Brute) !")
     except Exception as e:
-        print(f"VYBE : Erreur lors de l'application du correctif : {e}")
-        
-    print("VYBE AFRICA : Base de données prête et sécurisée.")
+        print(f"VYBE : Le patch a déjà été appliqué ou erreur : {e}")
+
+    print("VYBE AFRICA : Système prêt.")
 
 if __name__ == '__main__':
     app.run(debug=True)
