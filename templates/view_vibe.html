@@ -248,5 +248,43 @@ document.addEventListener("keydown", function(e){
         {% if prev_id %} window.location.href="{{ url_for('view_vibe', vibe_id=prev_id) }}"; {% endif %}
     }
 });
+
+// SWIPE MOBILE (TikTok style) - Version Optimisée
+let touchStartY = 0;
+let touchEndY = 0;
+
+document.addEventListener("touchstart", function(e){
+    // Sécurité : Ne pas swiper si on touche un champ de texte ou la zone de commentaires
+    if (e.target.closest('.comment-area') || e.target.tagName === "INPUT") return;
+    
+    touchStartY = e.changedTouches[0].screenY;
+}, {passive: true});
+
+document.addEventListener("touchend", function(e){
+    // Sécurité identique pour la fin du toucher
+    if (e.target.closest('.comment-area') || e.target.tagName === "INPUT") return;
+    
+    touchEndY = e.changedTouches[0].screenY;
+    handleSwipe();
+}, {passive: true});
+
+function handleSwipe(){
+    let diff = touchStartY - touchEndY;
+    const threshold = 70; // Sensibilité (70px minimum pour éviter les faux déclenchements)
+
+    // Swipe vers le haut (doigt monte) → vidéo suivante
+    if(diff > threshold){
+        {% if next_id %}
+            window.location.href = "{{ url_for('view_vibe', vibe_id=next_id) }}";
+        {% endif %}
+    }
+
+    // Swipe vers le bas (doigt descend) → vidéo précédente
+    if(diff < -threshold){
+        {% if prev_id %}
+            window.location.href = "{{ url_for('view_vibe', vibe_id=prev_id) }}";
+        {% endif %}
+    }
+}
 </script>
 {% endblock %}
