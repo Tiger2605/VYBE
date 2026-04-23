@@ -8,7 +8,7 @@
 body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; }
 
 .vibe-feed-container {
-    height: 100vh;
+    height: 100dvh; /* FIX MOBILE : S'adapte aux barres de navigation des téléphones */
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
@@ -17,51 +17,63 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .vibe-feed-container::-webkit-scrollbar { display: none; }
 
 .vibe-item {
-    height: 100vh;
+    height: 100dvh;
     width: 100%;
     scroll-snap-align: start;
     position: relative;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: center; /* Centre verticalement */
+    justify-content: center; /* Centre horizontalement */
     background: #000;
 }
 
 .vibe-media-content {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Utilise 'cover' si tu veux que ça remplisse tout l'écran */
+    object-fit: cover; /* Remplit l'écran comme TikTok. Change en 'contain' si tu préfères voir toute la vidéo avec des barres noires */
     z-index: 1;
 }
 
-/* GRADIENT DE LISIBILITÉ (Correctif Clic inclus) */
+/* GRADIENT DE LISIBILITÉ */
 .vibe-item::after {
     content: "";
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 35%;
+    height: 40%;
     background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
     z-index: 2;
-    pointer-events: none; /* LAISSE PASSER LES CLICS SUR LES BOUTONS */
+    pointer-events: none;
 }
 
-/* TOP OVERLAY (Glassmorphism) */
+/* TOP OVERLAY (Glassmorphism & Fix Superposition) */
 .top-nav-overlay {
     position: fixed;
-    top: 0;
+    top: 15px; 
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
     max-width: 500px;
     z-index: 100;
-    padding-top: 15px;
+}
+
+/* On ajoute un voile sombre en haut pour que la barre VYBE ne disparaisse pas sur fond blanc */
+.top-nav-overlay::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    left: -5%;
+    width: 110%;
+    height: 150%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+    z-index: -1;
+    pointer-events: none;
 }
 
 .mini-search { display: flex; gap: 8px; margin-bottom: 12px; }
 .mini-search input {
     flex: 1;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -76,7 +88,6 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .cat-item {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     color: #eee;
     padding: 6px 16px;
     border-radius: 20px;
@@ -87,11 +98,11 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 }
 .cat-item.active { background: #ff4b2b; border-color: #ff4b2b; color: white; font-weight: bold; }
 
-/* SIDEBAR ACTIONS */
+/* SIDEBAR ACTIONS (Remontée pour mobile) */
 .vibe-sidebar {
     position: absolute;
     right: 12px;
-    bottom: 110px;
+    bottom: 140px; /* Remonté pour éviter ta barre de menu rouge en bas */
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -118,10 +129,10 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .sidebar-btn:active { transform: scale(0.9); }
 .btn-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
 
-/* INFO OVERLAY */
+/* INFO OVERLAY (Remontée pour mobile) */
 .vibe-info-overlay {
     position: absolute;
-    bottom: 40px;
+    bottom: 110px; /* Aligné avec la sidebar pour plus de clarté */
     left: 15px;
     color: white;
     z-index: 10;
@@ -168,11 +179,9 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
             💬 <span class="btn-label">{{ video.comments|length }}</span>
         </button>
 
-        <button class="sidebar-btn" onclick="toggleFavorite('{{ video.id }}')" id="fav-btn-{{ video.id }}">
-            🔖</button>
+        <button class="sidebar-btn" onclick="toggleFavorite('{{ video.id }}')" id="fav-btn-{{ video.id }}">🔖</button>
 
-        <button class="sidebar-btn" onclick="copyLink('{{ video.id }}')">
-            🔗</button>
+        <button class="sidebar-btn" onclick="copyLink('{{ video.id }}')">🔗</button>
     </div>
 
     <div class="vibe-info-overlay">
@@ -217,17 +226,16 @@ const observer = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.vibe-item').forEach(item => observer.observe(item));
 
-// 2. PLAY / PAUSE MANUEL
+// 2. PLAY / PAUSE
 function togglePlayPause(video){
     video.paused ? video.play().catch(() => {}) : video.pause();
 }
 
-// 3. LIKE AVEC FEEDBACK VISUEL
+// 3. LIKE (Ta logique de feedback visuel est conservée)
 function toggleLike(id){
     const btn = document.getElementById("like-btn-"+id);
     const count = document.getElementById("like-count-"+id);
 
-    // Feedback immédiat
     btn.style.color = (btn.style.color === "rgb(255, 75, 43)") ? "white" : "#ff4b2b";
 
     fetch("/like/"+id, {method:"POST"})
@@ -254,7 +262,7 @@ function copyLink(id){
     });
 }
 
-// 6. INITIALISATION DU SON
+// 6. SON
 let isMuted = true;
 document.body.addEventListener('click', () => {
     if(isMuted){
@@ -263,5 +271,4 @@ document.body.addEventListener('click', () => {
     }
 }, { once: true });
 </script>
-
 {% endblock %}
