@@ -40,7 +40,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 40%;
+    height: 50%; /* 🔥 MODIFIÉ : 50% au lieu de 40% pour mieux voir les longs textes */
     background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
     z-index: 2;
     pointer-events: none;
@@ -49,7 +49,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 /* TOP OVERLAY (Glassmorphism & Fix Superposition) */
 .top-nav-overlay {
     position: fixed;
-    top: 15px; 
+    top: 70px;  /* 🔥 MODIFIÉ : 70px au lieu de 15px pour laisser la place au logo VYBE */
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
@@ -102,7 +102,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .vibe-sidebar {
     position: absolute;
     right: 12px;
-    bottom: 140px; /* Remonté pour éviter ta barre de menu rouge en bas */
+    bottom: 160px; /* 🔥 MODIFIÉ : 160px au lieu de 140px pour esquiver la barre de navigation du bas */
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -132,7 +132,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 /* INFO OVERLAY (Remontée pour mobile) */
 .vibe-info-overlay {
     position: absolute;
-    bottom: 110px; /* Aligné avec la sidebar pour plus de clarté */
+    bottom: 95px; /* 🔥 MODIFIÉ : 95px pour se poser parfaitement au-dessus de la barre de navigation */
     left: 15px;
     color: white;
     z-index: 10;
