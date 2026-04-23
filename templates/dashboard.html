@@ -8,11 +8,12 @@
 body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; }
 
 .vibe-feed-container {
-    height: 100dvh; /* FIX MOBILE : S'adapte aux barres de navigation des téléphones */
-    overflow-y: scroll;
+    height: 100dvh;
+    overflow-y: auto; /* 🔥 FIX FLUIDITÉ MOBILE */
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch; /* 🔥 SMOOTH iOS */
 }
 .vibe-feed-container::-webkit-scrollbar { display: none; }
 
@@ -22,16 +23,17 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     scroll-snap-align: start;
     position: relative;
     display: flex;
-    align-items: center; /* Centre verticalement */
-    justify-content: center; /* Centre horizontalement */
+    align-items: center;
+    justify-content: center;
     background: #000;
 }
 
 .vibe-media-content {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Remplit l'écran comme TikTok. Change en 'contain' si tu préfères voir toute la vidéo avec des barres noires */
+    object-fit: cover; /* Par défaut cover, le JS l'ajustera si besoin */
     z-index: 1;
+    background: black;
 }
 
 /* GRADIENT DE LISIBILITÉ */
@@ -40,16 +42,16 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 50%; /* 🔥 MODIFIÉ : 50% au lieu de 40% pour mieux voir les longs textes */
+    height: 50%;
     background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
     z-index: 2;
     pointer-events: none;
 }
 
-/* TOP OVERLAY (Glassmorphism & Fix Superposition) */
+/* TOP OVERLAY */
 .top-nav-overlay {
     position: fixed;
-    top: 70px;  /* 🔥 MODIFIÉ : 70px au lieu de 15px pour laisser la place au logo VYBE */
+    top: 70px; /* Aligné avec base.html */
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
@@ -57,7 +59,6 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     z-index: 100;
 }
 
-/* On ajoute un voile sombre en haut pour que la barre VYBE ne disparaisse pas sur fond blanc */
 .top-nav-overlay::before {
     content: "";
     position: absolute;
@@ -98,11 +99,11 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 }
 .cat-item.active { background: #ff4b2b; border-color: #ff4b2b; color: white; font-weight: bold; }
 
-/* SIDEBAR ACTIONS (Remontée pour mobile) */
+/* SIDEBAR (Remontée pour esquiver la nav bar) */
 .vibe-sidebar {
     position: absolute;
     right: 12px;
-    bottom: 160px; /* 🔥 MODIFIÉ : 160px au lieu de 140px pour esquiver la barre de navigation du bas */
+    bottom: 160px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -129,10 +130,10 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .sidebar-btn:active { transform: scale(0.9); }
 .btn-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
 
-/* INFO OVERLAY (Remontée pour mobile) */
+/* INFOS */
 .vibe-info-overlay {
     position: absolute;
-    bottom: 95px; /* 🔥 MODIFIÉ : 95px pour se poser parfaitement au-dessus de la barre de navigation */
+    bottom: 95px;
     left: 15px;
     color: white;
     z-index: 10;
@@ -142,7 +143,6 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .vibe-username { font-weight: 800; font-size: 17px; color: white; text-decoration: none; margin-bottom: 5px; display: block; }
 .vibe-caption { font-size: 14px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 .vibe-badge { background: #ff4b2b; padding: 2px 8px; border-radius: 4px; font-size: 10px; text-transform: uppercase; margin-left: 5px; }
-
 </style>
 
 <div class="top-nav-overlay">
@@ -209,12 +209,12 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 </div>
 
 <script>
-// 1. AUTOPLAY ET SCROLL OBSERVER
+// 1. AUTOPLAY
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         const video = entry.target.querySelector('video');
         if (entry.isIntersecting) {
-            if (video) video.play().catch(() => {});
+            if (video) video.play().catch(()=>{});
         } else {
             if (video) {
                 video.pause();
@@ -222,25 +222,32 @@ const observer = new IntersectionObserver((entries) => {
             }
         }
     });
-}, { threshold: 0.65 });
+},{threshold:0.65});
 
-document.querySelectorAll('.vibe-item').forEach(item => observer.observe(item));
+document.querySelectorAll('.vibe-item').forEach(item=>observer.observe(item));
+
+// 🎯 ADAPTATION INTELLIGENTE FORMAT VIDÉO
+document.querySelectorAll('video').forEach(video => {
+    video.addEventListener('loadedmetadata', () => {
+        const ratio = video.videoWidth / video.videoHeight;
+        video.style.objectFit = ratio > 1 ? "contain" : "cover";
+    });
+});
 
 // 2. PLAY / PAUSE
 function togglePlayPause(video){
-    video.paused ? video.play().catch(() => {}) : video.pause();
+    video.paused ? video.play().catch(()=>{}) : video.pause();
 }
 
-// 3. LIKE (Ta logique de feedback visuel est conservée)
+// 3. LIKE
 function toggleLike(id){
     const btn = document.getElementById("like-btn-"+id);
     const count = document.getElementById("like-count-"+id);
-
     btn.style.color = (btn.style.color === "rgb(255, 75, 43)") ? "white" : "#ff4b2b";
 
-    fetch("/like/"+id, {method:"POST"})
-    .then(r => r.json())
-    .then(d => {
+    fetch("/like/"+id,{method:"POST"})
+    .then(r=>r.json())
+    .then(d=>{
         if(d) count.innerText = d.likes_count;
     });
 }
@@ -248,27 +255,25 @@ function toggleLike(id){
 // 4. FAVORIS
 function toggleFavorite(id){
     const btn = document.getElementById("fav-btn-"+id);
-    fetch("/favorite/"+id, {method:"POST"})
-    .then(() => {
+    fetch("/favorite/"+id,{method:"POST"})
+    .then(()=>{
         btn.style.color = (btn.style.color === "rgb(241, 196, 15)") ? "white" : "#f1c40f";
     });
 }
 
-// 5. COPIER LIEN
+// 5. COPY
 function copyLink(id){
     const url = window.location.origin + "/vibe/" + id;
-    navigator.clipboard.writeText(url).then(() => {
-        alert("Lien VYBE copié ! 🚀");
-    });
+    navigator.clipboard.writeText(url).then(()=>alert("Lien VYBE copié ! 🚀"));
 }
 
-// 6. SON
+// 6. SON (Activation au premier clic)
 let isMuted = true;
-document.body.addEventListener('click', () => {
+document.body.addEventListener('click', ()=>{
     if(isMuted){
         document.querySelectorAll('video').forEach(v => v.muted = false);
         isMuted = false;
     }
-}, { once: true });
+},{once:true});
 </script>
 {% endblock %}
