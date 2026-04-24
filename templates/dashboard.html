@@ -4,10 +4,9 @@
 
 {% block content %}
 <style>
-/* ===== BASE & NAVIGATION ===== */
+/* ===== BASE & DISPOSITION ===== */
 body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; }
 
-/* Conteneur principal avec défilement fluide */
 .vibe-feed-container {
     height: 100dvh;
     overflow-y: auto;
@@ -32,12 +31,12 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .vibe-media-content {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ajusté dynamiquement par le JS plus bas */
+    object-fit: cover; /* Ajusté par JS */
     z-index: 1;
     background: black;
 }
 
-/* Gradient pour la lisibilité des textes en bas */
+/* Gradient pour assombrir le bas et lire les textes */
 .vibe-item::after {
     content: "";
     position: absolute;
@@ -49,27 +48,15 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     pointer-events: none;
 }
 
-/* Barre de recherche et catégories (Top) */
+/* ===== NAVIGATION HAUTE ===== */
 .top-nav-overlay {
     position: fixed;
-    top: 70px; /* Espace pour laisser le logo VYBE visible */
+    top: 70px;
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
     max-width: 500px;
     z-index: 100;
-}
-
-.top-nav-overlay::before {
-    content: "";
-    position: absolute;
-    top: -20px;
-    left: -5%;
-    width: 110%;
-    height: 150%;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
-    z-index: -1;
-    pointer-events: none;
 }
 
 .mini-search { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -97,13 +84,13 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     border: 1px solid rgba(255, 255, 255, 0.1);
     white-space: nowrap;
 }
-.cat-item.active { background: #ff4b2b; border-color: #ff4b2b; color: white; font-weight: bold; }
+.cat-item.active { background: #ff4b2b; color: white; font-weight: bold; }
 
-/* Actions Latérales (Like, Comms, etc) */
+/* ===== SIDEBAR & INFOS ===== */
 .vibe-sidebar {
     position: absolute;
     right: 12px;
-    bottom: 160px; /* Remonté pour ne pas chevaucher le menu bas */
+    bottom: 160px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -125,15 +112,13 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s;
 }
-.sidebar-btn:active { transform: scale(0.9); }
+
 .btn-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
 
-/* Informations Vidéo (Pseudo, Titre) */
 .vibe-info-overlay {
     position: absolute;
-    bottom: 95px; /* Aligné juste au-dessus du menu bas */
+    bottom: 95px;
     left: 15px;
     color: white;
     z-index: 10;
@@ -142,33 +127,56 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 
 .vibe-username { font-weight: 800; font-size: 17px; color: white; text-decoration: none; margin-bottom: 5px; display: block; }
 .vibe-caption { font-size: 14px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-.vibe-badge { background: #ff4b2b; padding: 2px 8px; border-radius: 4px; font-size: 10px; text-transform: uppercase; margin-left: 5px; }
+.vibe-badge { background: #ff4b2b; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 5px; text-transform: uppercase; }
 
-/* ===== COMMENT PANEL (TikTok Style) ===== */
+/* ===== PANNEAU COMMENTAIRES DYNAMIQUE ===== */
+.comment-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2500;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.comment-backdrop.active { display: block; opacity: 1; }
+
 .comment-panel {
     position: fixed;
     left: 0;
     bottom: -100%;
     width: 100%;
-    height: 70%;
-    background: #111;
+    height: 75%;
+    background: #121212;
     z-index: 3000;
-    border-radius: 20px 20px 0 0;
-    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 20px;
+    border-radius: 25px 25px 0 0;
+    transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    padding: 15px 20px;
     color: white;
 }
 .comment-panel.active { bottom: 0; }
-.comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-.comment-close { font-size: 24px; cursor: pointer; }
-#commentContent { overflow-y: auto; height: 85%; }
+
+.comment-handle {
+    width: 40px;
+    height: 5px;
+    background: #444;
+    border-radius: 10px;
+    margin: 0 auto 15px auto;
+    cursor: pointer;
+}
+
+.comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+#commentContent { overflow-y: auto; height: calc(100% - 60px); }
 </style>
 
 <div class="top-nav-overlay">
     <form method="GET" class="mini-search">
         <input type="text" name="q" value="{{ search_query or '' }}" placeholder="Explorer l'univers VYBE...">
     </form>
-
     <div class="category-bar">
         <a href="{{ url_for('dashboard') }}" class="cat-item {% if not request.args.get('category') %}active{% endif %}">Tout</a>
         <a href="{{ url_for('dashboard', category='Hot') }}" class="cat-item {% if request.args.get('category') == 'Hot' %}active{% endif %}">🔥 Hot</a>
@@ -180,7 +188,6 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 <div class="vibe-feed-container" id="feed">
 {% for video in videos %}
 <div class="vibe-item" id="item-{{ video.id }}">
-
     {% if video.category == 'Photos' %}
         <img src="{{ video.filename if video.filename and video.filename.startswith('http') else url_for('static', filename='uploads/' + (video.filename or 'default.jpg')) }}" class="vibe-media-content">
     {% else %}
@@ -193,11 +200,9 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
         <button class="sidebar-btn" id="like-btn-{{ video.id }}" onclick="toggleLike('{{ video.id }}')">
             ❤️ <span class="btn-label" id="like-count-{{ video.id }}">{{ video.likes|length }}</span>
         </button>
-
         <button class="sidebar-btn" onclick="openComments('{{ video.id }}')">
             💬 <span class="btn-label">{{ video.comments|length }}</span>
         </button>
-
         <button class="sidebar-btn" onclick="toggleFavorite('{{ video.id }}')" id="fav-btn-{{ video.id }}">🔖</button>
         <button class="sidebar-btn" onclick="copyLink('{{ video.id }}')">🔗</button>
     </div>
@@ -206,48 +211,48 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
         <a href="{{ url_for('profile', username=video.author.username) }}" class="vibe-username">
             @{{ video.author.username|lower }} <span class="vibe-badge">{{ video.category }}</span>
         </a>
-
         <div class="vibe-caption">
             <strong>{{ video.title }}</strong><br>
             {{ video.description[:85] if video.description else 'Pas de description' }}
+            
             {% if video.tags %}
                 <div style="color:#3498db; margin-top:5px; font-weight: 600;">
                     #{{ video.tags.replace(' ', ' #') }}
                 </div>
             {% endif %}
+            
         </div>
     </div>
 </div>
 {% endfor %}
 </div>
 
+<div class="comment-backdrop" id="commentBackdrop" onclick="closeComments()"></div>
 <div class="comment-panel" id="commentPanel">
+    <div class="comment-handle" onclick="closeComments()"></div>
     <div class="comment-header">
-        <h3>Commentaires</h3>
-        <span class="comment-close" onclick="closeComments()">✖</span>
+        <h3 style="margin:0;">Commentaires</h3>
+        <span onclick="closeComments()" style="cursor:pointer; color:#888;">✖</span>
     </div>
-    <div id="commentContent">Chargement des discussions...</div>
+    <div id="commentContent"></div>
 </div>
 
 <script>
-// 1. AUTOPLAY & GESTION DU SCROLL
+// 1. GESTION DU SCROLL & VIDEO
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         const video = entry.target.querySelector('video');
-        if (entry.isIntersecting) {
-            if (video) video.play().catch(()=>{});
-        } else {
-            if (video) {
-                video.pause();
-                video.currentTime = 0;
-            }
+        if (entry.isIntersecting && video) {
+            video.play().catch(()=>{});
+        } else if (video) {
+            video.pause();
+            video.currentTime = 0;
         }
     });
 },{threshold:0.65});
-
 document.querySelectorAll('.vibe-item').forEach(item=>observer.observe(item));
 
-// 2. FORMAT INTELLIGENT (Contain pour paysage, Cover pour portrait)
+// 2. RATIO VIDEO INTELLIGENT
 document.querySelectorAll('video').forEach(video => {
     video.addEventListener('loadedmetadata', () => {
         const ratio = video.videoWidth / video.videoHeight;
@@ -255,19 +260,33 @@ document.querySelectorAll('video').forEach(video => {
     });
 });
 
-// 3. FONCTIONS INTERACTIONS
-function togglePlayPause(video){
-    video.paused ? video.play().catch(()=>{}) : video.pause();
+// 3. ACTIONS
+function togglePlayPause(v){ v.paused ? v.play() : v.pause(); }
+
+function openComments(id){
+    document.getElementById("commentPanel").classList.add("active");
+    document.getElementById("commentBackdrop").classList.add("active");
+    document.getElementById("commentContent").innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Chargement des vibes...</p>";
+}
+
+function closeComments(){
+    document.getElementById("commentPanel").classList.remove("active");
+    document.getElementById("commentBackdrop").classList.remove("active");
 }
 
 function toggleLike(id){
     const btn = document.getElementById("like-btn-"+id);
     const count = document.getElementById("like-count-"+id);
     btn.style.color = (btn.style.color === "rgb(255, 75, 43)") ? "white" : "#ff4b2b";
-
+    
     fetch("/like/"+id,{method:"POST"})
     .then(r=>r.json())
     .then(d=>{ if(d) count.innerText = d.likes_count; });
+}
+
+function copyLink(id){
+    navigator.clipboard.writeText(window.location.origin + "/vibe/" + id);
+    alert("Lien copié !");
 }
 
 function toggleFavorite(id){
@@ -278,23 +297,7 @@ function toggleFavorite(id){
     });
 }
 
-function copyLink(id){
-    const url = window.location.origin + "/vibe/" + id;
-    navigator.clipboard.writeText(url).then(()=>alert("Lien VYBE copié ! 🚀"));
-}
-
-// 4. LOGIQUE DU PANNEAU DE COMMENTAIRES
-function openComments(id){
-    document.getElementById("commentPanel").classList.add("active");
-    // On simule le chargement (tu pourras ajouter un fetch vers ton API plus tard)
-    document.getElementById("commentContent").innerHTML = "<p style='text-align:center; margin-top:20px; color:#888;'>Les commentaires pour la vidéo #" + id + " arrivent bientôt...</p>";
-}
-
-function closeComments(){
-    document.getElementById("commentPanel").classList.remove("active");
-}
-
-// 5. GESTION DU SON (Activation au premier clic utilisateur)
+// 4. ACTIVATION SON
 let isMuted = true;
 document.body.addEventListener('click', ()=>{
     if(isMuted){
