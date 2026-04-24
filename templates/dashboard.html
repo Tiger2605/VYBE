@@ -7,6 +7,7 @@
 /* ===== BASE & NAVIGATION ===== */
 body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; }
 
+/* Conteneur principal avec défilement fluide */
 .vibe-feed-container {
     height: 100dvh;
     overflow-y: auto;
@@ -31,11 +32,12 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .vibe-media-content {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: cover; /* Ajusté dynamiquement par le JS plus bas */
     z-index: 1;
     background: black;
 }
 
+/* Gradient pour la lisibilité des textes en bas */
 .vibe-item::after {
     content: "";
     position: absolute;
@@ -47,10 +49,10 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     pointer-events: none;
 }
 
-/* NAVIGATION */
+/* Barre de recherche et catégories (Top) */
 .top-nav-overlay {
     position: fixed;
-    top: 70px;
+    top: 70px; /* Espace pour laisser le logo VYBE visible */
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
@@ -97,11 +99,11 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 }
 .cat-item.active { background: #ff4b2b; border-color: #ff4b2b; color: white; font-weight: bold; }
 
-/* SIDEBAR & OVERLAYS */
+/* Actions Latérales (Like, Comms, etc) */
 .vibe-sidebar {
     position: absolute;
     right: 12px;
-    bottom: 160px;
+    bottom: 160px; /* Remonté pour ne pas chevaucher le menu bas */
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -123,11 +125,15 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    transition: transform 0.2s;
 }
+.sidebar-btn:active { transform: scale(0.9); }
+.btn-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
 
+/* Informations Vidéo (Pseudo, Titre) */
 .vibe-info-overlay {
     position: absolute;
-    bottom: 95px;
+    bottom: 95px; /* Aligné juste au-dessus du menu bas */
     left: 15px;
     color: white;
     z-index: 10;
@@ -138,7 +144,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .vibe-caption { font-size: 14px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 .vibe-badge { background: #ff4b2b; padding: 2px 8px; border-radius: 4px; font-size: 10px; text-transform: uppercase; margin-left: 5px; }
 
-/* COMMENT PANEL */
+/* ===== COMMENT PANEL (TikTok Style) ===== */
 .comment-panel {
     position: fixed;
     left: 0;
@@ -156,13 +162,13 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
 .comment-close { font-size: 24px; cursor: pointer; }
 #commentContent { overflow-y: auto; height: 85%; }
-
 </style>
 
 <div class="top-nav-overlay">
     <form method="GET" class="mini-search">
         <input type="text" name="q" value="{{ search_query or '' }}" placeholder="Explorer l'univers VYBE...">
     </form>
+
     <div class="category-bar">
         <a href="{{ url_for('dashboard') }}" class="cat-item {% if not request.args.get('category') %}active{% endif %}">Tout</a>
         <a href="{{ url_for('dashboard', category='Hot') }}" class="cat-item {% if request.args.get('category') == 'Hot' %}active{% endif %}">🔥 Hot</a>
@@ -174,6 +180,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 <div class="vibe-feed-container" id="feed">
 {% for video in videos %}
 <div class="vibe-item" id="item-{{ video.id }}">
+
     {% if video.category == 'Photos' %}
         <img src="{{ video.filename if video.filename and video.filename.startswith('http') else url_for('static', filename='uploads/' + (video.filename or 'default.jpg')) }}" class="vibe-media-content">
     {% else %}
@@ -199,11 +206,14 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
         <a href="{{ url_for('profile', username=video.author.username) }}" class="vibe-username">
             @{{ video.author.username|lower }} <span class="vibe-badge">{{ video.category }}</span>
         </a>
+
         <div class="vibe-caption">
             <strong>{{ video.title }}</strong><br>
             {{ video.description[:85] if video.description else 'Pas de description' }}
             {% if video.tags %}
-                <div style="color:#3498db; margin-top:5px;">#{{ video.tags.replace(' ', ' #') }}</div>
+                <div style="color:#3498db; margin-top:5px; font-weight: 600;">
+                    #{{ video.tags.replace(' ', ' #') }}
+                </div>
             {% endif %}
         </div>
     </div>
@@ -216,24 +226,28 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
         <h3>Commentaires</h3>
         <span class="comment-close" onclick="closeComments()">✖</span>
     </div>
-    <div id="commentContent">Chargement...</div>
+    <div id="commentContent">Chargement des discussions...</div>
 </div>
 
 <script>
-// 1. AUTOPLAY & SCROLL
+// 1. AUTOPLAY & GESTION DU SCROLL
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         const video = entry.target.querySelector('video');
         if (entry.isIntersecting) {
             if (video) video.play().catch(()=>{});
         } else {
-            if (video) { video.pause(); video.currentTime = 0; }
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
         }
     });
 },{threshold:0.65});
+
 document.querySelectorAll('.vibe-item').forEach(item=>observer.observe(item));
 
-// 2. FORMAT INTELLIGENT
+// 2. FORMAT INTELLIGENT (Contain pour paysage, Cover pour portrait)
 document.querySelectorAll('video').forEach(video => {
     video.addEventListener('loadedmetadata', () => {
         const ratio = video.videoWidth / video.videoHeight;
@@ -241,37 +255,46 @@ document.querySelectorAll('video').forEach(video => {
     });
 });
 
-// 3. FONCTIONS ACTIONS
-function togglePlayPause(v){ v.paused ? v.play() : v.pause(); }
+// 3. FONCTIONS INTERACTIONS
+function togglePlayPause(video){
+    video.paused ? video.play().catch(()=>{}) : video.pause();
+}
 
 function toggleLike(id){
     const btn = document.getElementById("like-btn-"+id);
+    const count = document.getElementById("like-count-"+id);
     btn.style.color = (btn.style.color === "rgb(255, 75, 43)") ? "white" : "#ff4b2b";
-    fetch("/like/"+id,{method:"POST"});
+
+    fetch("/like/"+id,{method:"POST"})
+    .then(r=>r.json())
+    .then(d=>{ if(d) count.innerText = d.likes_count; });
 }
 
 function toggleFavorite(id){
     const btn = document.getElementById("fav-btn-"+id);
-    btn.style.color = (btn.style.color === "rgb(241, 196, 15)") ? "white" : "#f1c40f";
-    fetch("/favorite/"+id,{method:"POST"});
+    fetch("/favorite/"+id,{method:"POST"})
+    .then(()=>{
+        btn.style.color = (btn.style.color === "rgb(241, 196, 15)") ? "white" : "#f1c40f";
+    });
 }
 
 function copyLink(id){
-    navigator.clipboard.writeText(window.location.origin + "/vibe/" + id);
-    alert("Lien copié !");
+    const url = window.location.origin + "/vibe/" + id;
+    navigator.clipboard.writeText(url).then(()=>alert("Lien VYBE copié ! 🚀"));
 }
 
-// 4. LOGIQUE COMMENTAIRES (Panel)
+// 4. LOGIQUE DU PANNEAU DE COMMENTAIRES
 function openComments(id){
     document.getElementById("commentPanel").classList.add("active");
-    // Optionnel : Tu peux faire un fetch ici pour charger les vrais commentaires
-    document.getElementById("commentContent").innerHTML = "Chargement des commentaires pour #" + id + "...";
+    // On simule le chargement (tu pourras ajouter un fetch vers ton API plus tard)
+    document.getElementById("commentContent").innerHTML = "<p style='text-align:center; margin-top:20px; color:#888;'>Les commentaires pour la vidéo #" + id + " arrivent bientôt...</p>";
 }
+
 function closeComments(){
     document.getElementById("commentPanel").classList.remove("active");
 }
 
-// 5. SON
+// 5. GESTION DU SON (Activation au premier clic utilisateur)
 let isMuted = true;
 document.body.addEventListener('click', ()=>{
     if(isMuted){
