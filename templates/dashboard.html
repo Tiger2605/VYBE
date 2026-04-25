@@ -136,7 +136,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.2); /* Très léger */
+    background: rgba(0, 0, 0, 0.2); 
     backdrop-filter: blur(2px);
     z-index: 2500;
     display: none;
@@ -150,60 +150,94 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     left: 0;
     bottom: -100%;
     width: 100%;
-    height: 65%; /* Hauteur réduite pour l'effet flottant */
+    height: 70%; /* Hauteur adaptée pour mobile */
     
-    /* EFFET INVISIBLE / VERRE */
-    background: rgba(0, 0, 0, 0.4); 
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    /* EFFET GLASSMORPHISM (Invisible/Flou) */
+    background: rgba(15, 15, 15, 0.75); 
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     
     z-index: 3000;
     border-radius: 30px 30px 0 0;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-    padding: 15px 20px;
+    padding: 20px;
     color: white;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
 }
 .comment-panel.active { bottom: 0; }
 
-/* Conteneur des commentaires pour le défilement */
+/* --- CONTENU ET DÉFILEMENT --- */
 #commentContent { 
     overflow-y: auto; 
-    height: calc(100% - 60px); 
-    scrollbar-width: none; /* Cache la barre de défilement sur Firefox */
+    flex: 1;
+    scrollbar-width: none; 
 }
-#commentContent::-webkit-scrollbar { display: none; } /* Cache sur Chrome/Safari */
+#commentContent::-webkit-scrollbar { display: none; }
 
-/* Style d'un commentaire individuel */
+/* --- STYLE DES COMMENTAIRES ET INTERACTIONS --- */
 .comment-item {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 18px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.08);
+    margin-bottom: 20px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
+    position: relative;
 }
 
-.comment-handle {
-    width: 40px; height: 5px; background: rgba(255,255,255,0.3);
-    border-radius: 10px; margin: 0 auto 15px auto;
+.comment-footer {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #aaa;
 }
 
-/* ===== MODE ORDINATEUR (RESPONSIVE) ===== */
+.action-btn { 
+    cursor: pointer; 
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+}
+.action-btn:hover { color: white; }
+.action-btn.active-like { color: #ff4b2b; }
+.action-btn.active-dislike { color: #3498db; }
+
+/* --- RÉPONSES (THREADS) --- */
+.reply-container {
+    margin-left: 35px;
+    margin-top: 10px;
+    padding-left: 10px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- BOUTONS ÉDITION/SUPPRESSION --- */
+.user-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 10px;
+    font-size: 14px;
+}
+
+/* ===== MODE ORDINATEUR (SOUS LA BARRE NAV) ===== */
 @media (min-width: 992px) {
     .comment-panel {
-        top: 0;
+        top: 70px; /* Aligne sous la navbar du haut */
+        bottom: 85px; /* S'arrête avant le menu du bas (Évite de cacher l'icône Explorer) */
         right: -450px;
         left: auto;
-        bottom: auto;
         width: 400px;
-        height: 100%;
-        border-radius: 0;
-        background: rgba(0, 0, 0, 0.6); /* Un peu plus sombre sur PC */
+        height: auto; /* Laisse le top/bottom gérer la hauteur */
+        border-radius: 20px 0 0 20px;
+        background: rgba(10, 10, 10, 0.85);
+        border-top: none;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .comment-panel.active { right: 0; }
-    .comment-handle { display: none; }
     
     .comment-backdrop.active {
         opacity: 0.1;
@@ -303,6 +337,10 @@ document.querySelectorAll('video').forEach(video => {
 let scrollLoop;
 let isUserReading = false;
 
+// --- VARIABLES GLOBALES ---
+let scrollLoop;
+let isUserReading = false;
+
 // 3. ACTIONS
 function togglePlayPause(v){ v.paused ? v.play() : v.pause(); }
 
@@ -311,63 +349,128 @@ function openComments(id){
     const backdrop = document.getElementById("commentBackdrop");
     const content = document.getElementById("commentContent");
 
-    // 1. Affichage et blocage du scroll de fond
     panel.classList.add("active");
     backdrop.classList.add("active");
     if (window.innerWidth < 992) { document.body.style.overflow = "hidden"; }
 
-    // 2. Initialisation du contenu avec un exemple de structure (à lier à ta DB plus tard)
+    // Simulation de commentaires avec les nouvelles fonctionnalités
+    // Dans ta version finale, tu boucleras sur les données de ta base SQLite
     content.innerHTML = `
-        <div class="comment-item">
-            <div style="width:32px; height:32px; background:linear-gradient(45deg, #ff4b2b, #ff416c); border-radius:50%; flex-shrink:0;"></div>
-            <div style="flex:1;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="font-size:13px; color:#eee;">@vibeur_pionnier</strong>
-                    <span class="comment-like-heart" onclick="likeComment(this)" style="cursor:pointer; font-size:14px;">🤍 0</span>
+        <div class="comment-item" id="comment-101">
+            <div style="display:flex; gap:12px;">
+                <div style="width:35px; height:35px; background:linear-gradient(45deg, #ff4b2b, #ff416c); border-radius:50%; flex-shrink:0;"></div>
+                <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong style="font-size:13px; color:#eee;">@vibeur_pionnier</strong>
+                        <div class="user-controls">
+                            <span class="action-btn" onclick="editComment(101)" title="Modifier">✏️</span>
+                            <span class="action-btn" onclick="deleteComment(101)" title="Supprimer" style="color:#ff4b2b;">🗑️</span>
+                        </div>
+                    </div>
+                    
+                    <p id="comment-text-101" style="font-size:13px; color:#ccc; margin:5px 0;">Le design transparent est incroyable ! 🔥</p>
+                    
+                    <div class="comment-footer">
+                        <span class="action-btn" onclick="handleReaction(101, 'like')">👍 <small id="like-count-101">12</small></span>
+                        <span class="action-btn" onclick="handleReaction(101, 'dislike')">👎 <small id="dislike-count-101">0</small></span>
+                        <span class="action-btn" onclick="setupReply(101)">Répondre</span>
+                    </div>
+
+                    <div id="reply-sector-101" class="reply-container">
+                        </div>
                 </div>
-                <p style="font-size:13px; color:#ccc; margin-top:3px;">Le design transparent est incroyable ! 🔥</p>
             </div>
         </div>
-    `.repeat(15); // Simulation de plusieurs commentaires
+    `.repeat(5); 
 
-    // 3. LOGIQUE DE DÉFILEMENT INTELLIGENT
-    // On met en pause le défilement si l'utilisateur survole ou touche
+    // LOGIQUE DE DÉFILEMENT
     content.onmouseenter = () => { isUserReading = true; };
     content.onmouseleave = () => { isUserReading = false; };
     content.ontouchstart = () => { isUserReading = true; };
     content.ontouchend   = () => { isUserReading = false; };
 
-    // Lancement du moteur de scroll
     clearInterval(scrollLoop);
     scrollLoop = setInterval(() => {
         if (!isUserReading) {
             content.scrollTop += 1;
-            // Optionnel : boucler vers le haut si on arrive à la fin
-            if (content.scrollTop + content.clientHeight >= content.scrollHeight) {
-                // content.scrollTop = 0; 
-            }
         }
-    }, 45); // Ajuste ce chiffre pour changer la vitesse (plus haut = plus lent)
+    }, 50);
 }
 
 function closeComments(){
     document.getElementById("commentPanel").classList.remove("active");
     document.getElementById("commentBackdrop").classList.remove("active");
     document.body.style.overflow = "auto";
-    clearInterval(scrollLoop); // Arrêt important pour économiser la batterie/ressources
+    clearInterval(scrollLoop);
 }
 
-function likeComment(element) {
-    // Animation simple pour le like de commentaire
-    element.classList.toggle("is-liked");
-    if(element.classList.contains("is-liked")) {
-        element.innerHTML = "❤️ 1";
-        element.style.color = "#ff4b2b";
+// --- NOUVELLES FONCTIONS SOCIALES ---
+
+function handleReaction(commentId, type) {
+    const likeEl = document.getElementById(`like-count-${commentId}`);
+    const dislikeEl = document.getElementById(`dislike-count-${commentId}`);
+    
+    if(type === 'like') {
+        likeEl.innerText = parseInt(likeEl.innerText) + 1;
+        likeEl.parentElement.style.color = "#ff4b2b";
     } else {
-        element.innerHTML = "🤍 0";
-        element.style.color = "white";
+        dislikeEl.innerText = parseInt(dislikeEl.innerText) + 1;
+        dislikeEl.parentElement.style.color = "#3498db";
+    }
+    // Appel fetch vers ton API pour sauvegarder en DB ici
+}
+
+function setupReply(commentId) {
+    const sector = document.getElementById(`reply-sector-${commentId}`);
+    const inputId = `reply-input-${commentId}`;
+    
+    if(!document.getElementById(inputId)) {
+        sector.innerHTML += `
+            <div style="margin-top:10px; display:flex; gap:5px;">
+                <input type="text" id="${inputId}" placeholder="Ta réponse..." 
+                       style="flex:1; background:rgba(255,255,255,0.1); border:none; color:white; padding:5px 10px; border-radius:15px; font-size:12px;">
+                <button onclick="postReply(${commentId})" style="background:#ff4b2b; border:none; color:white; border-radius:50%; width:25px; height:25px; cursor:pointer;">➔</button>
+            </div>
+        `;
+        document.getElementById(inputId).focus();
     }
 }
+
+function postReply(commentId) {
+    const input = document.getElementById(`reply-input-${commentId}`);
+    const sector = document.getElementById(`reply-sector-${commentId}`);
+    
+    if(input.value.trim() !== "") {
+        const newReply = document.createElement("div");
+        newReply.style = "font-size:12px; color:#aaa; margin-top:8px; padding-left:10px; border-left:1px solid #444;";
+        newReply.innerHTML = `<strong>Toi:</strong> ${input.value}`;
+        sector.appendChild(newReply);
+        input.parentElement.remove();
+    }
+}
+
+function editComment(commentId) {
+    const textEl = document.getElementById(`comment-text-${commentId}`);
+    const currentText = textEl.innerText;
+    const newText = prompt("Modifier ton commentaire :", currentText);
+    
+    if(newText && newText !== currentText) {
+        textEl.innerText = newText;
+        // fetch pour UPDATE en base de données
+    }
+}
+
+function deleteComment(commentId) {
+    if(confirm("Voulez-vous vraiment supprimer cette vibe ?")) {
+        const comment = document.getElementById(`comment-${commentId}`);
+        comment.style.opacity = "0.3";
+        comment.style.pointerEvents = "none";
+        // fetch pour DELETE en base de données
+        setTimeout(() => comment.remove(), 500);
+    }
+}
+
+// --- ACTIONS GLOBALES (VIBES) ---
 
 function toggleLike(id){
     const btn = document.getElementById("like-btn-"+id);
