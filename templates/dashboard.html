@@ -129,86 +129,96 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .vibe-caption { font-size: 14px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 .vibe-badge { background: #ff4b2b; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 5px; text-transform: uppercase; }
 
-/* ===== PANNEAU COMMENTAIRES DYNAMIQUE & TRANSPARENT ===== */
+/* ===== PANNEAU COMMENTAIRES OPTIMISÉ POUR VYBE ===== */
 .comment-backdrop {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.2); /* Très léger */
-    backdrop-filter: blur(2px);
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.3); 
+    backdrop-filter: blur(4px);
     z-index: 2500;
-    display: none;
-    opacity: 0;
+    display: none; opacity: 0;
     transition: opacity 0.3s ease;
 }
 .comment-backdrop.active { display: block; opacity: 1; }
 
 .comment-panel {
     position: fixed;
-    left: 0;
-    bottom: -100%;
-    width: 100%;
-    height: 65%; /* Hauteur réduite pour l'effet flottant */
-    
-    /* EFFET INVISIBLE / VERRE */
-    background: rgba(0, 0, 0, 0.4); 
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    
+    left: 0; bottom: -100%;
+    width: 100%; height: 70%;
+    background: rgba(12, 12, 12, 0.8); /* Fond plus profond pour lisibilité */
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     z-index: 3000;
     border-radius: 30px 30px 0 0;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-    padding: 15px 20px;
+    padding: 20px;
     color: white;
+    display: flex;
+    flex-direction: column; /* Crucial pour le layout */
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 .comment-panel.active { bottom: 0; }
 
-/* Conteneur des commentaires pour le défilement */
+.comment-handle { /* Ta barre pour mobile */
+    width: 40px; height: 5px; background: rgba(255,255,255,0.2);
+    border-radius: 10px; margin: -10px auto 15px auto;
+}
+
 #commentContent { 
     overflow-y: auto; 
-    height: calc(100% - 60px); 
-    scrollbar-width: none; /* Cache la barre de défilement sur Firefox */
+    flex: 1; /* Remplace le calc() pour plus de souplesse */
+    scrollbar-width: none; 
 }
-#commentContent::-webkit-scrollbar { display: none; } /* Cache sur Chrome/Safari */
+#commentContent::-webkit-scrollbar { display: none; }
 
-/* Style d'un commentaire individuel */
+/* STYLE DES ITEMS & BOUTONS */
 .comment-item {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 18px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.08);
+    margin-bottom: 20px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
+    position: relative;
 }
 
-.comment-handle {
-    width: 40px; height: 5px; background: rgba(255,255,255,0.3);
-    border-radius: 10px; margin: 0 auto 15px auto;
+.user-controls {
+    position: absolute; top: 10px; right: 10px;
+    display: flex; gap: 8px;
 }
 
-/* ===== MODE ORDINATEUR (RESPONSIVE) ===== */
+.comment-footer {
+    display: flex; gap: 15px; margin-top: 10px;
+    font-size: 12px; color: #aaa;
+}
+
+.action-btn { cursor: pointer; transition: 0.2s; user-select: none; }
+.action-btn:active { transform: scale(0.9); }
+
+.reply-container {
+    margin-left: 35px; 
+    margin-top: 10px;
+    padding-left: 10px; 
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* RESPONSIVE PC */
 @media (min-width: 992px) {
     .comment-panel {
-        top: 0;
-        right: -450px;
+        top: 75px; 
+        bottom: 85px; /* Évite les menus haut/bas */
+        right: -450px; 
         left: auto;
-        bottom: auto;
-        width: 400px;
-        height: 100%;
-        border-radius: 0;
-        background: rgba(0, 0, 0, 0.6); /* Un peu plus sombre sur PC */
+        width: 400px; 
+        height: auto;
+        border-radius: 25px 0 0 25px;
+        background: rgba(10, 10, 10, 0.9);
     }
-    
-    .comment-panel.active { right: 0; }
-    .comment-handle { display: none; }
-    
-    .comment-backdrop.active {
-        opacity: 0.1;
-        pointer-events: none;
+    .comment-panel.active {
+         right: 0; 
     }
+    .comment-handle { 
+        display: none;
+     }
 }
 </style>
 
