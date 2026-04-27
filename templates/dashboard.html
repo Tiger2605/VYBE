@@ -173,6 +173,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 
     padding: 20px;
     padding-bottom: 80px; /* 🔥 safe zone nav */
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
 
     color: white;
 
@@ -180,6 +181,8 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     flex-direction: column;
 
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    will-change: transform;
 
     /* 🔥 animation performante */
     transform: translateY(100%);
@@ -203,7 +206,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 #commentContent {
     overflow-y: auto;
     flex: 1;
-
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
 #commentContent::-webkit-scrollbar {
