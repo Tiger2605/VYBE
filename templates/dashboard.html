@@ -129,15 +129,19 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 .vibe-caption { font-size: 14px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 .vibe-badge { background: #ff4b2b; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 5px; text-transform: uppercase; }
 
-/* ===== PANNEAU COMMENTAIRES VYBE - VERSION FINALE INTÉGRALE ===== */
+/* ===== PANNEAU COMMENTAIRES OPTIMISÉ VYBE PRO ===== */
 
 .comment-backdrop {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.4); 
+
+    background: rgba(0, 0, 0, 0.5); /* 🔥 meilleur contraste */
     backdrop-filter: blur(4px);
+
     z-index: 2500;
+
+    /* 🔥 Remplacement de display:none par visibility pour fluidifier la transition opacity */
     visibility: hidden;
     pointer-events: none;
     opacity: 0;
@@ -150,51 +154,64 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     opacity: 1;
 }
 
-/* PANEL PRINCIPAL : Style Vybe Glassmorphism + YouTube Layout */
+/* PANEL PRINCIPAL */
 .comment-panel {
     position: fixed;
     left: 0;
     bottom: 0;
-    width: 100%;
-    height: calc(70% - 70px); 
 
-    /* Transparence Vybe optimisée */
-    background: rgba(12, 12, 12, 0.82); 
+    width: 100%;
+    height: calc(70% - 70px); /* 🔥 évite conflit avec navbar */
+
+    background: rgba(12, 12, 12, 0.85);
     backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px); /* Support iPhone XR */
+    -webkit-backdrop-filter: blur(25px);
 
     z-index: 3000;
+
     border-radius: 25px 25px 0 0 !important;
 
-    /* Padding pour éviter que les icônes ne collent aux bords */
     padding: 20px;
-    padding-top: calc(15px + env(safe-area-inset-top)); 
-    padding-bottom: calc(85px + env(safe-area-inset-bottom));
-    
+    /*padding-bottom: 80px; /* 🔥 safe zone nav */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    padding-top: calc(10px + env(safe-area-inset-top));
     overflow: hidden;
+
     color: white;
+
     display: flex;
     flex-direction: column;
+
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 
     will-change: transform;
+
+    /* 🔥 animation performante */
     transform: translateY(100%);
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+.comment-panel::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 5px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    margin: 10px auto;
 }
 
 .comment-panel.active {
     transform: translateY(0);
 }
 
-/* Poignée mobile style YouTube/iOS */
-.comment-panel::before {
-    content: "";
-    display: block;
-    width: 35px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.3);
+/* poignée mobile */
+.comment-handle {
+    width: 40px;
+    height: 5px;
+    background: rgba(255,255,255,0.2);
     border-radius: 10px;
-    margin: -10px auto 18px auto;
+    margin: -10px auto 15px auto;
 }
 
 /* CONTENU SCROLL */
@@ -204,67 +221,57 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
-
 #commentContent::-webkit-scrollbar {
     display: none;
 }
 
-/* ITEM COMMENTAIRE : Look professionnel YouTube */
+/* ITEM COMMENTAIRE */
 .comment-item {
-    margin-bottom: 0;
-    padding: 16px 4px;
-    background: transparent !important; /* Supprime le bloc gris gênant */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Séparation fine et pro */
+    margin-bottom: 20px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
     position: relative;
-    transition: background 0.2s;
 }
 
-.comment-item:hover {
-    background: rgba(255, 255, 255, 0.03) !important;
-}
-
-/* CONTROLES UTILISATEUR (Menu ⋮ discret) */
+/* CONTROLES UTILISATEUR */
 .user-controls {
     position: absolute;
-    top: 14px;
-    right: 0;
+    top: 10px;
+    right: 10px;
     display: flex;
-    gap: 12px;
+    gap: 8px;
+    margin-left: 5px;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 15px;
 }
 
-/* FOOTER ACTIONS (Likes/Réponses) */
+/* FOOTER ACTIONS */
 .comment-footer {
     display: flex;
     align-items: center;
-    gap: 22px;
+    gap: 15px;
     margin-top: 10px;
     font-size: 12px;
-    color: #bbb;
+    color: #aaa;
+    flex-wrap: wrap;
 }
 
 .action-btn {
     cursor: pointer;
     transition: 0.2s;
     user-select: none;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 500;
 }
 
 .action-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.9);
 }
 
-.action-btn:hover {
-    color: #fff;
-}
-
-/* RÉPONSES IMBRIQUÉES */
+/* REPONSES */
 .reply-container {
-    margin-left: 42px;
-    margin-top: 12px;
-    padding-left: 12px;
+    margin-left: 35px;
+    margin-top: 10px;
+    padding-left: 10px;
     border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -273,13 +280,19 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
     .comment-panel {
         top: 75px;
         bottom: 85px;
+
         right: -450px;
         left: auto;
+
         width: 400px;
         height: auto;
-        border-radius: 25px 0 0 25px !important;
-        background: rgba(15, 15, 15, 0.85); /* Style dashboard transparent */
+
+        border-radius: 25px 0 0 25px;
+
+        /* 🔥 Fond plus opaque et ajout d'une ombre car on retire le flou global */
+        background: rgba(15, 15, 15, 0.85);
         box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+
         transform: none;
         transition: right 0.4s ease;
     }
@@ -288,13 +301,15 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
         right: 0;
     }
 
-    .comment-panel::before {
+    .comment-handle {
         display: none;
     }
 
+    /* 🔥 On retire le flou global pour le confort sur grand écran */
     .comment-backdrop.active {
         backdrop-filter: none;
-        background: rgba(0, 0, 0, 0.2); 
+        -webkit-backdrop-filter: none;
+        background: rgba(0, 0, 0, 0.1); /* Voile très léger */
     }
 }
 </style>
@@ -412,52 +427,44 @@ function renderComments(videoId) {
 
     // Simulation de données différentes selon la vidéo
     content.innerHTML = Array.from({length: 6}, (_, i) => {
-        const cid = 100 + i;
+        const cid = (parseInt(videoId) * 100) + i; // ID unique basé sur la vidéo
+
         return `
         <div class="comment-item" id="comment-${cid}">
             <div style="display:flex; gap:12px;">
-                <div style="width:36px; height:36px; background:#444; border-radius:50%; flex-shrink:0; overflow:hidden;">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${cid}" style="width:100%; height:100%;">
-                </div>
-                
+                <div style="width:35px; height:35px; background:linear-gradient(45deg, #ff4b2b, #ff416c); border-radius:50%; flex-shrink:0;"></div>
                 <div style="flex:1;">
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <div>
-                            <span style="font-size:12px; font-weight:bold; color:#fff;">@vibeur_${cid}</span>
-                            <span style="font-size:11px; color:#888; margin-left:8px;">il y a 2 min</span>
-                        </div>
-                        
-                        <div class="dropdown-menu">
-                            <button onclick="toggleMenu(${cid})" style="background:none; border:none; color:#aaa; cursor:pointer; font-size:16px;">⋮</button>
-                            <div id="menu-${cid}" class="menu-content">
-                                <div onclick="editComment(${cid})">✏️ Modifier</div>
-                                <div onclick="deleteComment(${cid})" style="color:#ff4b2b;">🗑️ Supprimer</div>
-                            </div>
-                        </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong style="font-size:13px; color:#eee;">@vibeur_${cid}</strong>
                     </div>
 
-                    <p id="comment-text-${cid}" style="font-size:13px; color:#eee; margin:4px 0 8px 0; line-height:1.4;">
-                        C'est exactement le style pro que je recherche pour Vybe ! ✨
+                    <p id="comment-text-${cid}" style="font-size:13px; color:#ccc; margin:5px 0;">
+                        C'est le commentaire n°${i+1} pour la vidéo ${videoId} ! 🔥
                     </p>
 
-                    <div style="display:flex; gap:16px; align-items:center; opacity:0.8;">
-                        <span class="action-btn" onclick="handleReaction(${cid}, 'like')" style="cursor:pointer; display:flex; align-items:center; gap:5px; font-size:12px;">
-                            👍 <small id="like-count-${cid}">12</small>
-                        </span>
-                        <span class="action-btn" onclick="handleReaction(${cid}, 'dislike')" style="cursor:pointer; font-size:12px;">👎</span>
-                        <span class="action-btn" onclick="setupReply(${cid})" style="cursor:pointer; font-size:12px; font-weight:600; color:#aaa;">Répondre</span>
+                    // Dans ton script, remplace le bloc <div class="comment-footer"> par celui-ci :
+                    <div class="comment-footer" style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <span class="action-btn" onclick="handleReaction(${cid}, 'like')" style="cursor:pointer; font-size: 12px;">
+                                👍 <small id="like-count-${cid}">12</small>
+                            </span>
+                            <span class="action-btn" onclick="setupReply(${cid})" style="cursor:pointer; font-size: 12px; color: #888;">
+                                Répondre
+                            </span>
+                        </div>
+                        
+                        <div class="user-controls" style="display: flex; gap: 10px; align-items: center; opacity: 0.8;">
+                            <span class="action-btn" onclick="editComment(${cid})" style="cursor:pointer; font-size: 14px;">✏️</span>
+                            <span class="action-btn" onclick="deleteComment(${cid})" style="color:#ff4b2b; cursor:pointer; font-size: 14px;">🗑️</span>
+                        </div>
                     </div>
+
+                    <div id="reply-sector-${cid}" class="reply-container"></div>
                 </div>
             </div>
         </div>`;
     }).join('');
-
-    // Petite fonction pour le menu ⋮
-    function toggleMenu(id) {
-        const allMenus = document.querySelectorAll('.menu-content');
-        allMenus.forEach(m => m.id !== `menu-${id}` ? m.classList.remove('show') : null);
-        document.getElementById(`menu-${id}`).classList.toggle('show');
-    }
+}
 
 function openComments(id){
     const panel = document.getElementById("commentPanel");
