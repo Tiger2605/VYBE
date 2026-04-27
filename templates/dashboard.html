@@ -420,11 +420,7 @@ function openComments(id){
                     
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <strong style="font-size:13px; color:#eee;">@vibeur_${cid}</strong>
-                        <div class="user-controls">
-                            <span class="action-btn" onclick="editComment(${cid})" style="cursor:pointer;">✏️</span>
-                            <span class="action-btn" onclick="deleteComment(${cid})" style="color:#ff4b2b; margin-left:8px; cursor:pointer;">🗑️</span>
                         </div>
-                    </div>
 
                     <p id="comment-text-${cid}" style="font-size:13px; color:#ccc; margin:5px 0;">
                         Le design transparent est incroyable ! 🔥
@@ -442,6 +438,11 @@ function openComments(id){
                         <span class="action-btn" onclick="setupReply(${cid})" style="margin-left:10px; cursor:pointer;">
                             Répondre
                         </span>
+
+                        <div class="user-controls">
+                            <span class="action-btn" onclick="editComment(${cid})" style="cursor:pointer;">✏️</span>
+                            <span class="action-btn" onclick="deleteComment(${cid})" style="color:#ff4b2b; margin-left:8px; cursor:pointer;">🗑️</span>
+                        </div>
                     </div>
 
                     <div id="reply-sector-${cid}" class="reply-container"></div>
