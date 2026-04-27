@@ -316,7 +316,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 
 <div class="vibe-feed-container" id="feed">
 {% for video in videos %}
-<div class="vibe-item" id="item-{{ video.id }}">
+<div class="vibe-item" id="item-{{ video.id }}" **data-id="{{ video.id }}"**>
     {% if video.category == 'Photos' %}
         <img src="{{ video.filename if video.filename and video.filename.startswith('http') else url_for('static', filename='uploads/' + (video.filename or 'default.jpg')) }}" class="vibe-media-content">
     {% else %}
@@ -367,18 +367,34 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Inter', sans
 </div>
 
 <script>
+// --- VARIABLES GLOBALES ---
+let scrollLoop = null;
+let isUserReading = false;
+let activeVideoId = null; // Stocke la vidéo actuellement visible
+
 // 1. GESTION DU SCROLL & VIDEO
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         const video = entry.target.querySelector('video');
+        // On récupère l'ID de la vidéo (assure-toi d'avoir data-id="..." sur ton .vibe-item)
+        const vibeId = entry.target.getAttribute('data-id'); 
+
         if (entry.isIntersecting && video) {
             video.play().catch(()=>{});
+            activeVideoId = vibeId; // Mise à jour de la vidéo active
+
+            // 🔥 Si le panneau est déjà ouvert, on actualise les commentaires au scroll
+            const panel = document.getElementById("commentPanel");
+            if(panel && panel.classList.contains("active")) {
+                renderComments(vibeId);
+            }
         } else if (video) {
             video.pause();
             video.currentTime = 0;
         }
     });
 },{threshold:0.65});
+
 document.querySelectorAll('.vibe-item').forEach(item=>observer.observe(item));
 
 // 2. RATIO VIDEO INTELLIGENT
@@ -389,55 +405,38 @@ document.querySelectorAll('video').forEach(video => {
     });
 });
 
-// --- VARIABLES GLOBALES ---
-let scrollLoop = null;
-let isUserReading = false;
-
 // 3. ACTIONS
 function togglePlayPause(v){ v.paused ? v.play() : v.pause(); }
 
-function openComments(id){
-    const panel = document.getElementById("commentPanel");
-    const backdrop = document.getElementById("commentBackdrop");
+// 🔥 NOUVELLE FONCTION : GÉNÉRATION DES COMMENTAIRES
+function renderComments(videoId) {
     const content = document.getElementById("commentContent");
+    if(!content) return;
 
-    if(!panel || !backdrop || !content) return;
-
-    panel.classList.add("active");
-    backdrop.classList.add("active");
-
-    // Scroll lock FIX mobile
-    if (window.innerWidth < 992) {
-        document.documentElement.style.overflow = "hidden";
-    }
-
-    // 🔥 Génération avec IDs uniques
-    content.innerHTML = Array.from({length: 8}, (_, i) => {
-        const cid = 100 + i;
+    // Simulation de données différentes selon la vidéo
+    content.innerHTML = Array.from({length: 6}, (_, i) => {
+        const cid = (parseInt(videoId) * 100) + i; // ID unique basé sur la vidéo
 
         return `
         <div class="comment-item" id="comment-${cid}">
             <div style="display:flex; gap:12px;">
                 <div style="width:35px; height:35px; background:linear-gradient(45deg, #ff4b2b, #ff416c); border-radius:50%; flex-shrink:0;"></div>
                 <div style="flex:1;">
-                    
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <strong style="font-size:13px; color:#eee;">@vibeur_${cid}</strong>
-                        </div>
+                    </div>
 
                     <p id="comment-text-${cid}" style="font-size:13px; color:#ccc; margin:5px 0;">
-                        Le design transparent est incroyable ! 🔥
+                        C'est le commentaire n°${i+1} pour la vidéo ${videoId} ! 🔥
                     </p>
 
                     <div class="comment-footer">
                         <span class="action-btn" onclick="handleReaction(${cid}, 'like')" style="cursor:pointer;">
                             👍 <small id="like-count-${cid}">12</small>
                         </span>
-
                         <span class="action-btn" onclick="handleReaction(${cid}, 'dislike')" style="margin-left:10px; cursor:pointer;">
                             👎 <small id="dislike-count-${cid}">0</small>
                         </span>
-
                         <span class="action-btn" onclick="setupReply(${cid})" style="margin-left:10px; cursor:pointer;">
                             Répondre
                         </span>
@@ -449,12 +448,27 @@ function openComments(id){
                     </div>
 
                     <div id="reply-sector-${cid}" class="reply-container"></div>
-
                 </div>
             </div>
-        </div>
-        `;
+        </div>`;
     }).join('');
+}
+
+function openComments(id){
+    const panel = document.getElementById("commentPanel");
+    const backdrop = document.getElementById("commentBackdrop");
+    const content = document.getElementById("commentContent");
+
+    if(!panel || !backdrop || !content) return;
+
+    panel.classList.add("active");
+    backdrop.classList.add("active");
+
+    // Scroll lock FIX mobile/iOS
+    document.body.style.overflow = "hidden";
+    
+    // Charger les commentaires de la vidéo spécifique
+    renderComments(id || activeVideoId);
 
     // Pause scroll si interaction
     content.onmouseenter = () => isUserReading = true;
@@ -464,14 +478,12 @@ function openComments(id){
 
     // 🔥 SCROLL FLUIDE
     cancelAnimationFrame(scrollLoop);
-
     function autoScroll(){
         if (!isUserReading) {
             content.scrollTop += 0.5;
         }
         scrollLoop = requestAnimationFrame(autoScroll);
     }
-
     autoScroll();
 }
 
@@ -482,8 +494,7 @@ function closeComments(){
     if(panel) panel.classList.remove("active");
     if(backdrop) backdrop.classList.remove("active");
 
-    document.documentElement.style.overflow = "auto";
-
+    document.body.style.overflow = "auto";
     cancelAnimationFrame(scrollLoop);
     scrollLoop = null;
 }
@@ -493,34 +504,28 @@ function closeComments(){
 function handleReaction(commentId, type) {
     const likeCountEl = document.getElementById(`like-count-${commentId}`);
     const dislikeCountEl = document.getElementById(`dislike-count-${commentId}`);
-
     if(!likeCountEl || !dislikeCountEl) return;
 
     const likeBtn = likeCountEl.parentElement;
     const dislikeBtn = dislikeCountEl.parentElement;
 
-    // reset visuel
     likeBtn.style.color = "white";
     dislikeBtn.style.color = "white";
 
     if(type === 'like'){
         likeBtn.style.color = "#ff4b2b";
-        // 🔥 Mise à jour du chiffre
         likeCountEl.innerText = parseInt(likeCountEl.innerText) + 1;
     } else {
         dislikeBtn.style.color = "#3498db";
-        // 🔥 Mise à jour du chiffre
         dislikeCountEl.innerText = parseInt(dislikeCountEl.innerText) + 1;
     }
 }
 
-// 🔥 EDIT INLINE (UX PRO avec touche Entrée)
 function editComment(commentId){
     const el = document.getElementById(`comment-text-${commentId}`);
     if(!el) return;
-
     const oldText = el.innerText;
-    isUserReading = true; // Stop auto-scroll pendant l'édition
+    isUserReading = true;
 
     el.innerHTML = `
         <input type="text" value="${oldText}" id="edit-${commentId}" 
@@ -530,29 +535,18 @@ function editComment(commentId){
     const input = document.getElementById(`edit-${commentId}`);
     input.focus();
 
-    // Fonction de sauvegarde réutilisable
     const saveContent = () => {
         el.innerText = input.value.trim() || oldText;
         isUserReading = false;
     };
 
-    // Quitter le champ (blur)
     input.onblur = saveContent;
-
-    // 🔥 Touche Entrée pour valider
     input.onkeydown = (e) => {
-        if(e.key === "Enter") {
-            e.preventDefault();
-            saveContent();
-        }
-        if(e.key === "Escape") { // Optionnel : Annuler avec Echap
-            el.innerText = oldText;
-            isUserReading = false;
-        }
+        if(e.key === "Enter") { e.preventDefault(); saveContent(); }
+        if(e.key === "Escape") { el.innerText = oldText; isUserReading = false; }
     };
 }
 
-// DELETE
 function deleteComment(commentId) {
     if(confirm("Supprimer ce commentaire ?")) {
         const el = document.getElementById(`comment-${commentId}`);
@@ -560,7 +554,6 @@ function deleteComment(commentId) {
     }
 }
 
-// REPLY
 function setupReply(commentId) {
     const sector = document.getElementById(`reply-sector-${commentId}`);
     if(!sector) return;
@@ -576,7 +569,6 @@ function setupReply(commentId) {
         const input = document.getElementById(`input-${commentId}`);
         input.focus();
         
-        // Bonus : Entrée pour les réponses aussi
         input.onkeydown = (e) => {
             if(e.key === "Enter" && input.value.trim() !== "") {
                 const val = input.value;
@@ -587,7 +579,7 @@ function setupReply(commentId) {
     }
 }
 
-// --- VIBES ---
+// --- VIBES (LIKE/FAV) ---
 function toggleLike(id){
     const btn = document.getElementById("like-btn-"+id);
     const count = document.getElementById("like-count-"+id);
