@@ -1,15 +1,18 @@
-/* ===== PANNEAU COMMENTAIRES VYBE (STYLE YOUTUBE) ===== */
+/* ===== PANNEAU COMMENTAIRES VYBE (VERSION OPTIMISÉE PRO) ===== */
 
+/* ===== BACKDROP ===== */
 .comment-backdrop {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.5); 
-    backdrop-filter: blur(4px);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45); 
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     z-index: 2500;
+
     visibility: hidden;
     pointer-events: none;
     opacity: 0;
+
     transition: opacity 0.3s ease, visibility 0.3s;
 }
 
@@ -19,59 +22,109 @@
     opacity: 1;
 }
 
+/* ===== PANEL ===== */
 .comment-panel {
     position: fixed;
-    left: 0; bottom: 0;
+    left: 0;
+    bottom: 0;
     width: 100%;
-    height: calc(70% - 70px); 
-    background: rgba(12, 12, 12, 0.85);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+
+    /* Plus fluide que calc fixe */
+    height: 70vh;
+    max-height: 85vh;
+
+    background: rgba(12, 12, 12, 0.88);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+
     z-index: 3000;
     border-radius: 25px 25px 0 0 !important;
-    padding: 20px;
-    padding-top: calc(10px + env(safe-area-inset-top));
-    padding-bottom: calc(80px + env(safe-area-inset-bottom));
-    overflow: hidden; 
+
+    padding: 18px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+    padding-bottom: calc(85px + env(safe-area-inset-bottom));
+
+    overflow: hidden;
     color: white;
+
     display: flex;
     flex-direction: column;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    /* PERF GPU */
     will-change: transform;
     transform: translateY(100%);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.comment-panel.active { transform: translateY(0); }
+.comment-panel.active {
+    transform: translateY(0);
+}
 
-/* Poignée mobile */
-.comment-panel::before, .comment-handle {
+/* ===== HANDLE (mobile UX) ===== */
+.comment-panel::before,
+.comment-handle {
     content: "";
     display: block;
-    width: 40px;
+    width: 45px;
     height: 5px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     border-radius: 10px;
-    margin: -10px auto 15px auto;
+    margin: -8px auto 12px auto;
 }
 
+/* ===== SCROLL AREA ===== */
 #commentContent {
-    overflow-y: auto;
     flex: 1;
+    overflow-y: auto;
+
     scrollbar-width: none;
-}
-#commentContent::-webkit-scrollbar { display: none; }
 
-/* Item Commentaire YouTube Style */
+    /* Scroll smooth mobile */
+    -webkit-overflow-scrolling: touch;
+}
+
+#commentContent::-webkit-scrollbar {
+    display: none;
+}
+
+/* ===== COMMENT ITEM ===== */
 .comment-item {
-    padding: 16px 8px;
-    background: transparent !important;
+    padding: 14px 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    position: relative;
-    transition: background 0.2s;
-}
-.comment-item:hover { background: rgba(255, 255, 255, 0.03) !important; }
 
+    background: transparent !important;
+    position: relative;
+
+    transition: background 0.2s ease;
+}
+
+.comment-item:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ===== HEADER ===== */
+.comment-header-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.comment-username {
+    font-size: 13px;
+    font-weight: 600;
+    color: #eee;
+}
+
+.comment-text {
+    font-size: 13px;
+    color: #ccc;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* ===== FOOTER ACTIONS ===== */
 .comment-footer {
     display: flex;
     align-items: center;
@@ -81,9 +134,38 @@
     color: #aaa;
 }
 
-.action-btn { cursor: pointer; transition: 0.2s; font-weight: 500; }
-.action-btn:active { transform: scale(0.9); }
+/* Groupe gauche (like/dislike) */
+.comment-actions-left {
+    display: flex;
+    gap: 12px;
+}
 
+/* ===== BUTTONS ===== */
+.action-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    user-select: none;
+}
+
+.action-btn:hover {
+    color: #fff;
+}
+
+.action-btn:active {
+    transform: scale(0.85);
+}
+
+/* ===== LIKE ACTIVE STATE ===== */
+.action-btn.active-like {
+    color: #ff4b2b;
+}
+
+.action-btn.active-dislike {
+    color: #3498db;
+}
+
+/* ===== REPLIES ===== */
 .reply-container {
     margin-left: 35px;
     margin-top: 10px;
@@ -91,19 +173,65 @@
     border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* ===== MODE PC ===== */
+/* ===== INPUT REPLY ===== */
+.reply-input {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+}
+
+.reply-input input {
+    flex: 1;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    border-radius: 15px;
+    padding: 6px 10px;
+    color: white;
+    font-size: 12px;
+    outline: none;
+}
+
+.reply-input button {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+}
+
+/* ===== PC MODE ===== */
 @media (min-width: 992px) {
+
     .comment-panel {
-        top: 75px; bottom: 85px;
-        right: -450px; left: auto;
-        width: 400px; height: auto;
+        top: 75px;
+        bottom: 85px;
+
+        right: -420px;
+        left: auto;
+
+        width: 380px;
+        height: auto;
+
         border-radius: 25px 0 0 25px !important;
-        background: rgba(15, 15, 15, 0.85);
-        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+
+        background: rgba(15, 15, 15, 0.92);
+
+        box-shadow: -15px 0 40px rgba(0, 0, 0, 0.6);
+
         transform: none;
-        transition: right 0.4s ease;
+        transition: right 0.35s ease;
     }
-    .comment-panel.active { right: 0; }
-    .comment-handle, .comment-panel::before { display: none; }
-    .comment-backdrop.active { backdrop-filter: none; background: rgba(0, 0, 0, 0.1); }
+
+    .comment-panel.active {
+        right: 0;
+    }
+
+    .comment-panel::before,
+    .comment-handle {
+        display: none;
+    }
+
+    .comment-backdrop.active {
+        backdrop-filter: none;
+        background: rgba(0, 0, 0, 0.15);
+    }
 }
