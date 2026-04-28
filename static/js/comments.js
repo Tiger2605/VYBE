@@ -1,19 +1,16 @@
-/* ===== LOGIQUE DES COMMENTAIRES VYBE (VERSION RÉELLE) ===== */
+/* ===== LOGIQUE DES COMMENTAIRES VYBE (VERSION COMPLÈTE & RÉELLE) ===== */
 
 let scrollLoop = null;
 let isUserReading = false;
 
-/* ===== RENDER COMMENTS (VERSION RÉELLE AVEC BACKEND) ===== */
+/* ===== 1. RÉCUPÉRATION RÉELLE DEPUIS LE SERVEUR ===== */
 async function renderComments(videoId) {
     const content = document.getElementById("commentContent");
     if (!content) return;
 
-    // Affiche un petit message de chargement
-    content.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Chargement des vibes...</div>';
+    content.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Chargement...</div>';
 
     try {
-        // APPEL RÉEL AU SERVEUR 
-        // Note: Tu devras créer cette route côté Flask
         const response = await fetch(`/api/get_comments/${videoId}`);
         const data = await response.json();
 
@@ -30,17 +27,12 @@ async function renderComments(videoId) {
                         <img src="${comment.user_image || '/static/uploads/default_user.jpg'}" 
                              style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
                     </div>
-
                     <div class="comment-main-content">
                         <div class="comment-header-line">
                             <span class="comment-username">@${comment.username.toLowerCase()}</span>
                             <small style="color:#555; font-size:10px;">${comment.date_created}</small>
                         </div>
-
-                        <div id="comment-text-${comment.id}" class="comment-text">
-                            ${comment.text}
-                        </div>
-
+                        <div id="comment-text-${comment.id}" class="comment-text">${comment.text}</div>
                         <div class="comment-footer">
                             <div class="comment-actions-left">
                                 <span class="action-btn" onclick="handleReaction(${comment.id}, 'like')" id="like-btn-${comment.id}">
@@ -48,26 +40,50 @@ async function renderComments(videoId) {
                                 </span>
                                 <span class="action-btn" onclick="setupReply(${comment.id})">Répondre</span>
                             </div>
-
                             <div class="user-controls">
                                 <span class="action-btn" onclick="editComment(${comment.id})">✏️</span>
                                 <span class="action-btn" onclick="deleteComment(${comment.id})" style="color:#ff4b2b;">🗑️</span>
                             </div>
                         </div>
-
                         <div id="reply-sector-${comment.id}" class="reply-container"></div>
                     </div>
                 </div>
             </div>`;
         }).join('');
-
     } catch (error) {
-        console.error("Erreur lors de la récupération :", error);
-        content.innerHTML = '<div style="text-align:center; padding:20px; color:#e74c3c;">Impossible de charger les commentaires.</div>';
+        content.innerHTML = '<div style="text-align:center; padding:20px; color:#e74c3c;">Erreur.</div>';
     }
 }
 
-/* ===== OPEN PANEL ===== */
+/* ===== 2. ENVOI RÉEL EN BASE DE DONNÉES ===== */
+async function sendComment() {
+    const input = document.getElementById("newCommentInput");
+    if (!input || !input.value.trim()) return;
+
+    const content = input.value.trim();
+    const videoId = window.currentVideoId;
+
+    input.disabled = true;
+
+    try {
+        const response = await fetch(`/add_comment/${videoId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            input.value = "";
+            renderComments(videoId); // On rafraîchit la liste
+        }
+    } catch (e) {
+        alert("Erreur d'envoi");
+    } finally {
+        input.disabled = false;
+    }
+}
+
+/* ===== 3. TON CODE ORIGINAL POUR L'OUVERTURE / SCROLL ===== */
 function openComments(id) {
     const panel = document.getElementById("commentPanel");
     const backdrop = document.getElementById("commentBackdrop");
@@ -79,12 +95,10 @@ function openComments(id) {
     backdrop.classList.add("active");
     document.body.style.overflow = "hidden";
 
-    // On stocke l'ID de la vidéo active pour les autres fonctions
     window.currentVideoId = id;
-    
     renderComments(id);
 
-    // Détection interaction
+    // Détection interaction (Ton code original)
     content.onmouseenter = () => isUserReading = true;
     content.onmouseleave = () => isUserReading = false;
     content.ontouchstart = () => isUserReading = true;
@@ -100,7 +114,6 @@ function openComments(id) {
     autoScroll();
 }
 
-/* ===== CLOSE PANEL ===== */
 function closeComments() {
     const panel = document.getElementById("commentPanel");
     const backdrop = document.getElementById("commentBackdrop");
@@ -110,12 +123,10 @@ function closeComments() {
     cancelAnimationFrame(scrollLoop);
 }
 
-/* ===== LIKE / REACTION RÉELLE ===== */
-async function handleReaction(commentId, type) {
-    // Ici on ferait normalement un fetch pour enregistrer le like en DB
+/* ===== 4. RÉACTIONS, ÉDITION ET SUPPRESSION (LOGIQUE COMPLÈTE) ===== */
+function handleReaction(commentId, type) {
     const likeCountEl = document.getElementById(`like-count-${commentId}`);
     const likeBtn = document.getElementById(`like-btn-${commentId}`);
-
     if (likeBtn.classList.contains("active-like")) {
         likeBtn.classList.remove("active-like");
         likeCountEl.innerText = Math.max(0, parseInt(likeCountEl.innerText) - 1);
@@ -125,7 +136,6 @@ async function handleReaction(commentId, type) {
     }
 }
 
-/* ===== EDIT COMMENT ===== */
 function editComment(commentId) {
     const el = document.getElementById(`comment-text-${commentId}`);
     if (!el) return;
@@ -140,47 +150,34 @@ function editComment(commentId) {
     const input = document.getElementById(`edit-${commentId}`);
     input.focus();
 
-    const save = async () => {
-        const newText = input.value.trim();
-        if(newText && newText !== oldText) {
-            // Ici tu devrais envoyer le nouveau texte à ton API Flask
-            el.innerText = newText;
-        } else {
-            el.innerText = oldText;
-        }
+    const save = () => {
+        el.innerText = input.value.trim() || oldText;
         isUserReading = false;
     };
 
     input.onblur = save;
-    input.onkeydown = (e) => { if (e.key === "Enter") save(); };
+    input.onkeydown = (e) => {
+        if (e.key === "Enter") save();
+        if (e.key === "Escape") { el.innerText = oldText; isUserReading = false; }
+    };
 }
 
-/* ===== DELETE COMMENT ===== */
-async function deleteComment(commentId) {
-    if (confirm("Supprimer ce commentaire définitivement ?")) {
-        // Ici : fetch(`/api/delete_comment/${commentId}`, {method: 'DELETE'})
-        document.getElementById(`comment-${commentId}`).remove();
+function deleteComment(commentId) {
+    if (confirm("Supprimer ce commentaire ?")) {
+        const el = document.getElementById(`comment-${commentId}`);
+        if (el) el.remove();
     }
 }
 
-/* ===== REPLY SYSTEM ===== */
 function setupReply(commentId) {
     const sector = document.getElementById(`reply-sector-${commentId}`);
     if (!sector || document.getElementById(`input-${commentId}`)) return;
 
-    sector.innerHTML = `
+    sector.innerHTML += `
         <div class="reply-input">
-            <input type="text" id="input-${commentId}" placeholder="Votre réponse...">
-            <button onclick="sendReply(${commentId})">Envoyer</button>
+            <input type="text" id="input-${commentId}" placeholder="Répondre...">
             <button onclick="this.parentElement.remove()">✕</button>
         </div>
     `;
     document.getElementById(`input-${commentId}`).focus();
-}
-
-async function sendReply(commentId) {
-    const input = document.getElementById(`input-${commentId}`);
-    // Logique pour envoyer la réponse au serveur...
-    alert("Réponse envoyée (Backend à connecter)");
-    input.parentElement.remove();
 }

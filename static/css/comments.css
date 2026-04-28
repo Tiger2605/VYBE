@@ -8,11 +8,9 @@
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     z-index: 2500;
-
     visibility: hidden;
     pointer-events: none;
     opacity: 0;
-
     transition: opacity 0.3s ease, visibility 0.3s;
 }
 
@@ -28,31 +26,21 @@
     left: 0;
     bottom: 0;
     width: 100%;
-
-    /* Plus fluide que calc fixe */
     height: 70vh;
     max-height: 85vh;
-
     background: rgba(12, 12, 12, 0.88);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
-
     z-index: 3000;
     border-radius: 25px 25px 0 0 !important;
-
     padding: 18px;
     padding-top: calc(12px + env(safe-area-inset-top));
     padding-bottom: calc(85px + env(safe-area-inset-bottom));
-
     overflow: hidden;
     color: white;
-
     display: flex;
     flex-direction: column;
-
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-
-    /* PERF GPU */
     will-change: transform;
     transform: translateY(100%);
     transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
@@ -74,14 +62,35 @@
     margin: -8px auto 12px auto;
 }
 
+/* ===== STRUCTURE UTILISATEUR & AVATAR ===== */
+.comment-user-flex {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+
+    /* Style amélioré */
+    background: linear-gradient(45deg, #444, #222);
+
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+/* Contenu principal du commentaire */
+.comment-main-content {
+    flex: 1;
+}
+
 /* ===== SCROLL AREA ===== */
 #commentContent {
     flex: 1;
     overflow-y: auto;
-
     scrollbar-width: none;
-
-    /* Scroll smooth mobile */
     -webkit-overflow-scrolling: touch;
 }
 
@@ -93,10 +102,8 @@
 .comment-item {
     padding: 14px 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-
     background: transparent !important;
     position: relative;
-
     transition: background 0.2s ease;
 }
 
@@ -134,7 +141,6 @@
     color: #aaa;
 }
 
-/* Groupe gauche (like/dislike) */
 .comment-actions-left {
     display: flex;
     gap: 12px;
@@ -156,7 +162,6 @@
     transform: scale(0.85);
 }
 
-/* ===== LIKE ACTIVE STATE ===== */
 .action-btn.active-like {
     color: #ff4b2b;
 }
@@ -200,23 +205,16 @@
 
 /* ===== PC MODE ===== */
 @media (min-width: 992px) {
-
     .comment-panel {
         top: 75px;
         bottom: 85px;
-
         right: -420px;
         left: auto;
-
         width: 380px;
         height: auto;
-
         border-radius: 25px 0 0 25px !important;
-
         background: rgba(15, 15, 15, 0.92);
-
         box-shadow: -15px 0 40px rgba(0, 0, 0, 0.6);
-
         transform: none;
         transition: right 0.35s ease;
     }
