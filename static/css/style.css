@@ -2,13 +2,12 @@
 body { 
     margin: 0; 
     background: #000; 
-    overflow-x: hidden; /* FIX: autorise scroll vertical */
+    overflow: hidden; 
     font-family: 'Inter', sans-serif; 
 }
 
-/* ===== FEED ===== */
 .vibe-feed-container {
-    height: calc(100dvh - 70px); /* FIX: espace pour navbar */
+    height: 100dvh;
     overflow-y: auto;
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
@@ -17,9 +16,8 @@ body {
 }
 .vibe-feed-container::-webkit-scrollbar { display: none; }
 
-/* ===== ITEM VIDÉO ===== */
 .vibe-item {
-    min-height: calc(100dvh - 70px); /* FIX: évite que la vidéo cache la navbar */
+    height: 100dvh;
     width: 100%;
     scroll-snap-align: start;
     position: relative;
@@ -29,7 +27,6 @@ body {
     background: #000;
 }
 
-/* ===== MEDIA ===== */
 .vibe-media-content {
     width: 100%;
     height: 100%;
@@ -38,7 +35,7 @@ body {
     background: black;
 }
 
-/* ===== GRADIENT POUR LISIBILITÉ ===== */
+/* Gradient pour la lisibilité des textes */
 .vibe-item::after {
     content: "";
     position: absolute;
@@ -53,16 +50,15 @@ body {
 /* ===== NAVIGATION HAUTE ===== */
 .top-nav-overlay {
     position: fixed;
-    top: 20px;
+    top: 20px; /* Ajusté pour ne pas être trop bas */
     left: 50%;
     transform: translateX(-50%);
     width: 95%;
     max-width: 500px;
-    z-index: 1000; /* renforcé pour passer au-dessus */
+    z-index: 100;
 }
 
 .mini-search { display: flex; gap: 8px; margin-bottom: 12px; }
-
 .mini-search input {
     flex: 1;
     background: rgba(255, 255, 255, 0.2);
@@ -75,15 +71,7 @@ body {
     outline: none;
 }
 
-/* ===== CATÉGORIES ===== */
-.category-bar { 
-    display: flex; 
-    gap: 10px; 
-    overflow-x: auto; 
-    scrollbar-width: none; 
-}
-.category-bar::-webkit-scrollbar { display: none; }
-
+.category-bar { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
 .cat-item {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
@@ -95,14 +83,9 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     white-space: nowrap;
 }
+.cat-item.active { background: #ff4b2b; color: white; font-weight: bold; }
 
-.cat-item.active { 
-    background: #ff4b2b; 
-    color: white; 
-    font-weight: bold; 
-}
-
-/* ===== SIDEBAR ACTIONS ===== */
+/* ===== SIDEBAR & INFOS ===== */
 .vibe-sidebar {
     position: absolute;
     right: 12px;
@@ -110,7 +93,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    z-index: 20; /* augmenté pour passer au-dessus */
+    z-index: 10;
     align-items: center;
 }
 
@@ -130,47 +113,17 @@ body {
     justify-content: center;
 }
 
-.btn-label { 
-    font-size: 11px; 
-    font-weight: 600; 
-    margin-top: 2px; 
-}
+.btn-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
 
-/* ===== INFOS VIDÉO ===== */
 .vibe-info-overlay {
     position: absolute;
     bottom: 95px;
     left: 15px;
     color: white;
-    z-index: 20;
+    z-index: 10;
     max-width: 80%;
 }
 
-.vibe-username { 
-    font-weight: 800; 
-    font-size: 17px; 
-    color: white; 
-    text-decoration: none; 
-    margin-bottom: 5px; 
-    display: block; 
-}
-
-.vibe-caption { 
-    font-size: 14px; 
-    line-height: 1.4; 
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5); 
-}
-
-.vibe-badge { 
-    background: #ff4b2b; 
-    padding: 2px 8px; 
-    border-radius: 4px; 
-    font-size: 10px; 
-    margin-left: 5px; 
-    text-transform: uppercase; 
-}
-
-/* ===== NAVBAR SÉCURITÉ ===== */
-.bottom-nav {
-    z-index: 5000 !important; /* FIX: toujours au-dessus */
-}
+.vibe-username { font-weight: 800; font-size: 17px; color: white; text-decoration: none; margin-bottom: 5px; display: block; }
+.vibe-caption { font-size: 14px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.vibe-badge { background: #ff4b2b; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 5px; text-transform: uppercase; }
