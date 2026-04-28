@@ -1,0 +1,129 @@
+/* ===== VYBE : BASE & DISPOSITION ===== */
+body { 
+    margin: 0; 
+    background: #000; 
+    overflow: hidden; 
+    font-family: 'Inter', sans-serif; 
+}
+
+.vibe-feed-container {
+    height: 100dvh;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.vibe-feed-container::-webkit-scrollbar { display: none; }
+
+.vibe-item {
+    height: 100dvh;
+    width: 100%;
+    scroll-snap-align: start;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+.vibe-media-content {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    z-index: 1;
+    background: black;
+}
+
+/* Gradient pour la lisibilité des textes */
+.vibe-item::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* ===== NAVIGATION HAUTE ===== */
+.top-nav-overlay {
+    position: fixed;
+    top: 20px; /* Ajusté pour ne pas être trop bas */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 95%;
+    max-width: 500px;
+    z-index: 100;
+}
+
+.mini-search { display: flex; gap: 8px; margin-bottom: 12px; }
+.mini-search input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 10px 20px;
+    color: white;
+    outline: none;
+}
+
+.category-bar { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
+.cat-item {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    color: #eee;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+}
+.cat-item.active { background: #ff4b2b; color: white; font-weight: bold; }
+
+/* ===== SIDEBAR & INFOS ===== */
+.vibe-sidebar {
+    position: absolute;
+    right: 12px;
+    bottom: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+    align-items: center;
+}
+
+.sidebar-btn {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
+
+.vibe-info-overlay {
+    position: absolute;
+    bottom: 95px;
+    left: 15px;
+    color: white;
+    z-index: 10;
+    max-width: 80%;
+}
+
+.vibe-username { font-weight: 800; font-size: 17px; color: white; text-decoration: none; margin-bottom: 5px; display: block; }
+.vibe-caption { font-size: 14px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.vibe-badge { background: #ff4b2b; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-left: 5px; text-transform: uppercase; }
